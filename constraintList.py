@@ -26,12 +26,6 @@ class ListOfConstraints:
                 constraint.append((x_i, y_i))
             self.constraints.append(Constraint(constraint, value))
 
-    def getConstraintListRef(self):
-        return self.constraints
-
-    def getDeepCopyConstraintList(self):
-        return deepcopy(self.constraints)
-
     def getConstraintList_RAW(self):
         constraints = []
         for equation in self.constraints:
@@ -41,18 +35,6 @@ class ListOfConstraints:
                 constraint.append((x_i, y_i))
             constraints.append(Constraint(constraint, value))
         return constraints
-
-    def getConstraintList(self, new_constraint_list_obj):
-        for equation in self.constraints:
-            new_constraint_list_obj.constraints.append(Constraint(deepcopy(equation.constraint[:]), deepcopy(equation.value)))
-        # return copy.deepcopy(self.constraint_list)
-        return new_constraint_list_obj.constraints
-
-    def setConstraintListCopy(self, new_constraint_list_obj):
-        for equation in self.constraints:
-            new_constraint_list_obj.constraints.append(Constraint(equation.constraint[:], int(equation.value)))
-        # return copy.deepcopy(self.constraint_list)
-        return new_constraint_list_obj.constraints
 
     # Get Length of the Constraint Equations List
     def getConstraintsListLength(self):
@@ -71,14 +53,6 @@ class ListOfConstraints:
     # Add a Constraint Equation and its Value to the Constraint Equation List
     def addConstraintEquation(self, constraint, value):
         self.constraints.append(Constraint(constraint, value))
-
-    # Get Unique List of Constraint Equations
-    def getUniqueConstraintList(self):
-        uniqueConstraintList = []
-        for equation in self.constraints:
-            if len(equation) > 0 and equation not in uniqueConstraintList:
-                uniqueConstraintList.append(equation)
-        return uniqueConstraintList
 
     # Determine Coordinates that are Clues and Mines if it satisfies an Equation
     def markCluesAndMines(self):
@@ -222,29 +196,19 @@ class ListOfConstraints:
 
                 elif foundPotentialClueCell:
 
-                    cellToReturnClue = cell
+                    return cell, None
 
                 elif foundPotentialMineCell:
 
-                    cellToReturnMine = cell
+                    return None, cell
 
-        if cellToReturnClue:
-            return cellToReturnClue, None
-        elif cellToReturnMine:
-            return None, cellToReturnMine
-        else:
-            return None, None
+        return None, None
 
     # Check if Constraint List Equations Are Valid
     def checkConstraintsList(self):
         for eq_i in self.constraints:
             if len(eq_i.constraint) < eq_i.value or eq_i.value < 0:
                 return False
-            for eq_j in self.constraints:
-                if eq_i == eq_j:
-                    continue
-                elif len(eq_j.constraint) < eq_j.value or eq_j.value < 0:
-                    return False
         return True
 
     def testCellConstraints(self, constraints, cell, cellType):
@@ -283,11 +247,7 @@ class ListOfConstraints:
         for eq_i in constraints:
             if len(eq_i.constraint) < eq_i.value or eq_i.value < 0:
                 return False
-            for eq_j in constraints:
-                if eq_i == eq_j or (len(eq_j.constraint) == 0 and eq_j.value == 0):
-                    continue
-                elif len(eq_j.constraint) < eq_j.value or eq_j.value < 0:
-                    return False
+
         return True
 
     # Print Constraints List Equations
