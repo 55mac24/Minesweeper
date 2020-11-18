@@ -43,12 +43,14 @@ class CreateProbabilityTree:
             riskOfCoordinates.append((cell, risk))
             risk_values.append(risk)
 
-        min_risk = min(risk_values)
         candidates = []
-        for riskOfCoordinate in riskOfCoordinates:
-            (coordinate, risk) = riskOfCoordinate
-            if risk == min_risk:
-                candidates.append(coordinate)
+        min_risk = float('inf')
+        if len(risk_values) > 0:
+            min_risk = min(risk_values)
+            for riskOfCoordinate in riskOfCoordinates:
+                (coordinate, risk) = riskOfCoordinate
+                if risk == min_risk:
+                    candidates.append(coordinate)
         if len(candidates) == 0:
             return None, None
         elif len(candidates) == 1:
