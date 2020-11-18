@@ -29,11 +29,9 @@ class CreateProbabilityTree:
 
     def minimizeRisk(self, cellsThatCanBeDeducedIfClue, cellsThatCanBeDeducedIfMine, predictionsOfCellAsMine):
 
-        riskOfCoordinates = []
-        risk_values = []
+        riskOfCoordinates, risk_values = [], []
         for prediction in predictionsOfCellAsMine:
             cell, q = prediction
-
             if cell in cellsThatCanBeDeducedIfClue and cell in cellsThatCanBeDeducedIfMine:
                 risk = (q * cellsThatCanBeDeducedIfClue[cell]) + ((1 - q) * cellsThatCanBeDeducedIfMine[cell])
             elif cell in cellsThatCanBeDeducedIfClue:
@@ -102,20 +100,20 @@ class CreateProbabilityTree:
         cellsAsClueObservations, cellsAsMineObservations, total = {}, {}, {}
 
         cellsDeducedIfClue, cellsDeducedIfMine = {}, {}
-        resolved_paths = {}
+
         print("--------------- Combining Start ---------------")
         for unionConstraint in disjointConstraintsList:
             exhaustive_constraints = unionConstraint.getListOfConstraintCoordinates()
             testCell = unionConstraint.getRandomCellForTree(exhaustive_constraints, testCell)
             print("TEST CELL: ", testCell)
 
-            clueTree = Tree(testCell, unionConstraint.getConstraintList_RAW(), MineSweeper.CLUE, self.minimize, resolved_paths)
-
-            mineTree = Tree(testCell, unionConstraint.getConstraintList_RAW(), MineSweeper.MINE, self.minimize, clueTree.getResolvedPaths())
-            resolved_paths = mineTree.getResolvedPaths()
-
+            clueTree = Tree(testCell, unionConstraint.getConstraintList_RAW(), MineSweeper.CLUE, self.minimize, None)
             clueTree.createCSPProbabilityTree()
+            clueTree.getCellTypePredictions()
+
+            mineTree = Tree(testCell, unionConstraint.getConstraintList_RAW(), MineSweeper.MINE, self.minimize, clueTree.resolved_paths)
             mineTree.createCSPProbabilityTree()
+            mineTree.getCellTypePredictions()
 
             clues_ClueTree, clues_MineTree = clueTree.cellAsClue, mineTree.cellAsClue
             mines_ClueTree, mines_MineTree = clueTree.cellAsMine, mineTree.cellAsMine
@@ -139,16 +137,12 @@ class CreateProbabilityTree:
 
             tempTotal = self.combineCellValues(total, cellsAsClueObservations)
             total = self.combineCellValues(tempTotal, cellsAsMineObservations)
-
             print("Clue Observations: ", cellsAsClueObservations)
             print("Mine Observations: ", cellsAsMineObservations)
             print("Total: ", total)
 
         predictionsOfCellsAsMine = self.createMineProbability(cellsAsMineObservations, total)
         print("Predictions: ", predictionsOfCellsAsMine)
-        for path in resolved_paths:
-            print("Clues: ", resolved_paths[path][MineSweeper.CLUE], " | Mines: ", resolved_paths[path][MineSweeper.MINE])
-
         print("---------------- Combining End ----------------")
 
         if self.minimize == MineSweeper.RISK:
