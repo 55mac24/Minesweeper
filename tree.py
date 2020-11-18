@@ -4,7 +4,7 @@ from constraintList import ListOfConstraints
 class Leaf:
     def __init__(self, cell, constraints, value):
         self.cell, self.type = cell, value
-
+        self.listOfConstraints = None
         self.listOfConstraints = ListOfConstraints()
 
         self.clue, self.mine = None, None  # Left child, Right child
@@ -47,22 +47,19 @@ class Tree:
         self.cellAsClue, self.cellAsMine = {}, {}
         self.cellsDeducedIfClue, self.cellsDeducedIfMine = {}, {}
 
-        self.paths, self.resolved_paths = [], None
+        self.paths, self.resolved_paths = [], dict()
         self.likelihoodOfCellAsMine, self.total = {}, {}
-
         self.createResolvedPathsCopy(resolved_paths)
 
     def createResolvedPathsCopy(self, resolved_paths):
-        if not resolved_paths:
-            self.resolved_paths = {}
-        else:
+        if resolved_paths:
             for path in resolved_paths:
                 clues = resolved_paths[path][MineSweeper.CLUE]
                 mines = resolved_paths[path][MineSweeper.MINE]
-                self.resolved_paths = {path:{MineSweeper.CLUE: clues, MineSweeper.MINE: mines}}
+                self.resolved_paths.update({path: {MineSweeper.CLUE: clues, MineSweeper.MINE: mines}})
 
     def getResolvedPaths(self):
-        resolved_paths = {}
+        resolved_paths = dict()
         for path in self.resolved_paths:
             clues = self.resolved_paths[path][MineSweeper.CLUE]
             mines = self.resolved_paths[path][MineSweeper.MINE]
@@ -81,9 +78,6 @@ class Tree:
             clue_cell, mine_cell = node.listOfConstraints.getRandomCellType(
                 node.listOfConstraints.getConstraintList_RAW())  # node.listOfConstraints.getConstraintList(ConstraintList())
 
-            # print("#####CSP START#####")
-            # node.listOfConstraints.output_constraints()
-            # print("######CSP END######")
             if not node.clue and clue_cell:
                 node.clue = Leaf(cell=clue_cell, constraints=node.listOfConstraints, value=MineSweeper.CLUE)
 
@@ -95,7 +89,7 @@ class Tree:
             if node.mine:
                 stack.append(node.mine)
 
-        return self.getCellTypePredictions()
+        self.pruneCSPTree(self.root)
 
     # Remove Invalid Tree Branches (Invalid branches are when a leaf with no children still has constraints to satisfy)
     def pruneCSPTree(self, node):
@@ -128,29 +122,17 @@ class Tree:
 
     # Compute Coordinate Likelihoods as Clues and Mines Based on Tree Branches
     def getCellTypePredictions(self):
-        # TO-DO: Add bottom up tree pruning method to remove subtree branches where all constraints were not satisfied
-        self.pruneCSPTree(self.root)
         self.traverse([], self.root)
         # print("-------------------- TEST CELL PREDICTION START --------------------")
-
-        if not self.resolved_paths:
-            self.resolved_paths = {}
         count = len(self.resolved_paths)
         for path in self.paths:
-            clues_in_path = set()
-            mines_in_path = set()
+            clues_in_path, mines_in_path = set(), set()
             for node in path:
                 (coordinate, typeOfCell, clues, mines) = node.cell, node.type, node.clues, node.mines
 
-                # print("Cell: ", cell, "Cell Type: ", typeOfCell, "Clues:", clues, "Mines: ", mines, end='')
-                # print(' --->', end='')
+                # print("Cell: ", cell, "Cell Type: ", typeOfCell, "Clues:", clues, "Mines: ", mines, ' ---> ', end='')
+
                 if coordinate and (typeOfCell == MineSweeper.CLUE or typeOfCell == MineSweeper.MINE):
-                    # print("-------------------- TEST CELL PREDICTION SUB-PATH START --------------------")
-                    # print("Cell: ", cell, "Type: ", typeOfCell," | Constraints: ")
-                    # node.cell_constraints.output_constraints()
-                    # print("--------------------  TEST CELL PREDICTION SUB-PATH END  --------------------")
-
-
                     if typeOfCell == MineSweeper.CLUE:
                         if coordinate not in clues_in_path:
                             clues_in_path.add(coordinate)
@@ -189,6 +171,7 @@ class Tree:
                 self.updateCellDictWithValue(cells=list(mines_in_path), dictionary=self.cellAsMine)
                 print()
                 count += 1
+
         print("Possibilities: ", count, " | ", len(self.paths))
         print("Clue Total: ", self.cellAsClue)
         print("Mine Total: ", self.cellAsMine)
