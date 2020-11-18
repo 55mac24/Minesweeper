@@ -184,14 +184,14 @@ class ListOfConstraints:
                     constraint_list.remove(constraint_list[index])
                 else:
                     index += 1
-        count = 0
-        print(union_set_index)
-        for union in disjointConstraints:
-            print("Set #%d: " % (count), end='')
-            for equation in union:
-                print(equation.constraint, " ", equation.value, " | ", end='')
-            print()
-            count += 1
+        # count = 0
+        # print(union_set_index)
+        # for union in disjointConstraints:
+        #     print("Set #%d: " % (count), end='')
+        #     for equation in union:
+        #         print(equation.constraint, " ", equation.value, " | ", end='')
+        #     print()
+        #     count += 1
         return disjointConstraints
 
     # Get a Random Coordinate and Cell Type it (Mine or Clue) satisfies from the Constraint List of Equations
@@ -203,7 +203,6 @@ class ListOfConstraints:
         for c in constraint_list:
             if len(c.constraint) < 1:
                 continue
-            # constraintEquation = c.constraint
             for cell in c.constraint:
 
                 clue_list = ListOfConstraints()
@@ -251,20 +250,13 @@ class ListOfConstraints:
     def testCellConstraints(self, constraints, cell, cellType):
 
         constraints.sort(key= lambda x: len(x.constraint))
-        # print(cell, " | Before update test | ", cellType)
-        # self.output_constraint(constraints)
 
         for c in constraints:
-            # print("C: " , c.constraint)
             if cell in c.constraint:
-                # print(c.value, "  | ", end="")
                 c.value = c.value - cellType
-                # print(c.value)
                 c.constraint.remove(cell)
                 if len(c.constraint) < c.value or c.value < 0:
                     return False
-        # print("After update test")
-        # self.output_constraint(constraints)
 
         for i in constraints:
             constraint_i = i.constraint
