@@ -12,7 +12,7 @@ class Agent(GenerateMineSweeperMap):
         self.createMineSweeperMap() # Initialize Map To Solve
         self.print_hidden_map() # Print Map Hidden From Agent
 
-        self.minimizeCostOrRisk = minimizeCostOrRisk
+        self.minimize = minimizeCostOrRisk
 
         self.startingCoordinate = startingCoordinate
 
@@ -21,7 +21,7 @@ class Agent(GenerateMineSweeperMap):
 
         self.isVisited = {}
 
-        self.flagged, self.known = [], []
+        self.flagged, self.known = [], [self.startingCoordinate]
 
         # self.output_agent_map()
 
@@ -104,12 +104,15 @@ class Agent(GenerateMineSweeperMap):
                 clues.append(coordinate)
                 self.createConstraintEquationForCoordinate(coordinate)
                 if not self.isVisited[coordinate]:
-                    self.known.append(coordinate)
+                    if coordinate not in self.known:
+                        self.known.append(coordinate)
                     extend_stack.append(coordinate)
+
         if len(clues) > 0:
             self.updateConstraintEquations(clues, MineSweeper.CLUE)
         if len(mines) > 0:
             self.updateConstraintEquations(mines, MineSweeper.MINE)
+
         return extend_stack
 
     ############################################################
@@ -146,7 +149,7 @@ class Agent(GenerateMineSweeperMap):
         self.updateAgentKnowledge(mines, isMineUpdate=True)
 
     def testPossibleConfigurations(self, unknowns):
-        TestConfigs = CreateProbabilityTree(self.minimizeCostOrRisk)
+        TestConfigs = CreateProbabilityTree(self.minimize)
         self.output_agent_map()
         nextCoordinateToVisit = TestConfigs.testPossibleConfigurations(self.listOfConstraints)
         if nextCoordinateToVisit is not None:
@@ -166,7 +169,7 @@ class Agent(GenerateMineSweeperMap):
         restartCoordinates = []
         randomSelect = []
         predictionCoordinates = []
-        while len(stack) > 0:
+        while len(stack) > 0 and (len(self.known) + len(self.flagged)) < (int(self.dimensions**2)):
             # print("-------------------- CONSTRAINTS BEFORE START --------------------")
             # self.output_constraints()
             # print("--------------------- CONSTRAINTS BEFORE END ---------------------")
@@ -201,7 +204,7 @@ class Agent(GenerateMineSweeperMap):
                 if len(unknowns) == 1:
                     uncover.append(unknowns[0])
                 else:
-                    if self.minimizeCostOrRisk == MineSweeper.COST or self.minimizeCostOrRisk == MineSweeper.RISK:
+                    if self.minimize == MineSweeper.COST or self.minimize == MineSweeper.RISK:
                         minimumProbCoordinate = self.testPossibleConfigurations(unknowns)
                         if minimumProbCoordinate is not None:
                             uncover.append(minimumProbCoordinate)
@@ -219,8 +222,8 @@ class Agent(GenerateMineSweeperMap):
             if len(uncover) > 0:
                 stack.extend(self.updateAgentKnowledge(uncover))
 
-            if len(stack) == 0 and len(self.flagged) < self.numberOfMines:
-                if self.minimizeCostOrRisk == MineSweeper.COST or self.minimizeCostOrRisk == MineSweeper.RISK:
+            if len(stack) == 0:
+                if self.minimize == MineSweeper.COST or self.minimize == MineSweeper.RISK:
                     minimumProbCoordinate = self.testPossibleConfigurations(unknowns)
                     if minimumProbCoordinate is not None:
                         predictionCoordinates.append(minimumProbCoordinate)
@@ -243,6 +246,7 @@ class Agent(GenerateMineSweeperMap):
             if mine in predictionCoordinates:
                 incorrect.append(mine)
         print("Prediction Mines: ", incorrect)
+
     def forceRestart(self):
         unobservedCoordinates = []
         for x in range(self.dimensions):
@@ -333,10 +337,10 @@ class Agent(GenerateMineSweeperMap):
             'agent-location': self.agentCurrentLocation,
             'agentIncorrectlyIdentified': self.agentIncorrectlyIdentified.copy(),
             'agentCorrectlyIdentified': self.agentCorrectlyIdentified.copy(),
+
             }
         self.agentStateCache.append(oldAgentState)
-        self.agentCorrectlyIdentified = []
-        self.agentIncorrectlyIdentified = []
+        self.agentCorrectlyIdentified, self.agentIncorrectlyIdentified = [], []
 
     ############################################################
     #                                                          #
