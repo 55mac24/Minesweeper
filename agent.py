@@ -150,7 +150,7 @@ class Agent(GenerateMineSweeperMap):
 
     def testPossibleConfigurations(self, unknowns):
         TestConfigs = CreateProbabilityTree(self.minimize)
-        self.output_agent_map()
+        # self.output_agent_map()
         nextCoordinateToVisit = TestConfigs.testPossibleConfigurations(self.listOfConstraints)
         if nextCoordinateToVisit is not None:
             # print("~~~~~Test Prob: ", nextCoordinateToVisit, "~~~~~")
@@ -170,9 +170,11 @@ class Agent(GenerateMineSweeperMap):
         randomSelect = []
         predictionCoordinates = []
         while len(stack) > 0 and (len(self.known) + len(self.flagged)) < (int(self.dimensions**2)):
+            print(len(self.known), " + ", len(self.flagged), " = ", int(self.dimensions**2))
             # print("-------------------- CONSTRAINTS BEFORE START --------------------")
             # self.output_constraints()
             # print("--------------------- CONSTRAINTS BEFORE END ---------------------")
+            self.output_agent_map()
             coordinate = stack.pop()
             self.resetAgentsCurrentState()
             self.setAgentsCurrentState(agentLocation=coordinate)
@@ -218,7 +220,7 @@ class Agent(GenerateMineSweeperMap):
                         if numOfAdjKnowns < 2 and len(uncover) == 0 and numOfAdjUnknowns > 1:
                             uncover.append(self.random_select(unknowns))
                             randomSelect.append(uncover[-1])
-            self.output_agent_map()
+
             if len(uncover) > 0:
                 stack.extend(self.updateAgentKnowledge(uncover))
 
@@ -228,6 +230,8 @@ class Agent(GenerateMineSweeperMap):
                     if minimumProbCoordinate is not None:
                         predictionCoordinates.append(minimumProbCoordinate)
                         stack.append(minimumProbCoordinate)
+                        if minimumProbCoordinate not in self.known:
+                            self.known.append(minimumProbCoordinate)
                     else:
                         stack.append(self.forceRestart())
                         restartCoordinates.append(stack[-1])
