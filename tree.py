@@ -98,6 +98,7 @@ class Tree:
         else:
             if not node.clue and not node.mine:
                 node.isValid = False if not node.listOfConstraints.checkConstraintsList() else True
+                node.isValid = False if node.listOfConstraints.getConstraintsListLength() > 0 else True
                 return node
 
             elif node.clue:
@@ -112,6 +113,10 @@ class Tree:
 
             if not node.clue and not node.mine:
                 node.isValid = False if not node.listOfConstraints.checkConstraintsList() else True
+                node.isValid = False if node.listOfConstraints.getConstraintsListLength() > 0 else True
+
+            if not node.isValid:
+                node = None
             return node
 
     def updateCellDictWithValue(self, cells, dictionary, coordinate=None, value=1):
@@ -129,7 +134,8 @@ class Tree:
             clues_in_path, mines_in_path = set(), set()
             for node in path:
                 (coordinate, typeOfCell, clues, mines) = node.cell, node.type, node.clues, node.mines
-
+                if not node.isValid:
+                    break
                 # print("Cell: ", cell, "Cell Type: ", typeOfCell, "Clues:", clues, "Mines: ", mines, ' ---> ', end='')
 
                 if coordinate and (typeOfCell == MineSweeper.CLUE or typeOfCell == MineSweeper.MINE):
@@ -166,15 +172,15 @@ class Tree:
             if not doesPathExist:
                 self.resolved_paths[count] = {MineSweeper.CLUE: clues_in_path, MineSweeper.MINE: mines_in_path}
 
-                print("Entry #%d" % (count) ," | Clues: ", clues_in_path, " | Mines: ", mines_in_path)
+                # print("Entry #%d" % (count) ," | Clues: ", clues_in_path, " | Mines: ", mines_in_path)
                 self.updateCellDictWithValue(cells=list(clues_in_path), dictionary=self.cellAsClue)
                 self.updateCellDictWithValue(cells=list(mines_in_path), dictionary=self.cellAsMine)
-                print()
+                # print()
                 count += 1
 
-        print("Possibilities: ", count, " | ", len(self.paths))
-        print("Clue Total: ", self.cellAsClue)
-        print("Mine Total: ", self.cellAsMine)
+        # print("Possibilities: ", count, " | ", len(self.paths))
+        # print("Clue Total: ", self.cellAsClue)
+        # print("Mine Total: ", self.cellAsMine)
         # print("--------------------  TEST CELL PREDICTION END  --------------------")
 
     # find all root-to-leaf paths. Each path is a potential configuration in the Minesweeper Map.
