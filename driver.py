@@ -20,7 +20,7 @@ def computeMineDensityPerformance(results):
         density_result_avg[density_] = computePerformanceOfAgent(test_results)
     return density_result_avg
 
-dimensions = 10
+dimensions = 6
 density = 0.1
 
 density_offset = 0.025
