@@ -1,16 +1,27 @@
 from generateMineSweeperMap import GenerateMineSweeperMap
 from constraintList import ListOfConstraints
-from definitionsForAgent import MineSweeper
+from definitionsForAgent import MineSweeper, VALUE, TYPE, MINIMIZE, SELECTION
 from random import randint
-from createProbabilityTree import CreateProbabilityTree
+from createProbabilityTree import CreateProbability
+
+
+# Randomly Select From List
+def random_select(neighbors):
+    if len(neighbors) == 0:
+        return []
+    elif len(neighbors) == 1:
+        return neighbors[0]
+    else:
+        index = randint(0, len(neighbors) - 1)
+        return neighbors[index]
 
 
 class Agent(GenerateMineSweeperMap):
     def __init__(self, dimensions, mines, startingCoordinate, isMapPassed, minimizeCostOrRisk):
         super().__init__(dimensions, mines, startingCoordinate, isMapPassed)
 
-        self.createMineSweeperMap() # Initialize Map To Solve
-        self.print_hidden_map() # Print Map Hidden From Agent
+        self.create_map()  # Initialize Map To Solve
+        self.print_hidden_map()  # Print Map Hidden From Agent
 
         self.minimize = minimizeCostOrRisk
 
@@ -18,102 +29,90 @@ class Agent(GenerateMineSweeperMap):
 
         self.agentCurrentLocation = self.startingCoordinate
         self.agentStateCache, self.agentCorrectlyIdentified, self.agentIncorrectlyIdentified = [], [], []
+        self.agentSelectionType, self.agentPredictions = SELECTION.START, []
 
         self.isVisited = {}
-
         self.flagged, self.known = [], [self.startingCoordinate]
-
-        # self.output_agent_map()
 
         self.listOfConstraints = None
         self.initializeAgentParams()
         self.solve()
 
     def initializeAgentParams(self):
+        self.listOfConstraints = ListOfConstraints()
         for x_o in range(self.dimensions):
             for y_o in range(self.dimensions):
                 coordinate = (x_o, y_o)
                 self.isVisited[coordinate] = False
-        self.listOfConstraints = ListOfConstraints()
 
-    def updateLocalMap(self, coordinate):
+    def updateLocalMap(self, coordinate, typeOfSelection=SELECTION.RESTART):
         (x, y) = coordinate
-
-        if self.agent_map[x][y] == MineSweeper.FLAG:
-            self.setAgentsCurrentState(agentCorrectlyIdentified=coordinate)
-            return MineSweeper.FLAG
+        self.setAgentsCurrentState(typeOfSelection=typeOfSelection)
+        if self.agent_map[x][y] == TYPE.FLAG:
+            self.setAgentsCurrentState(correct=coordinate)
+            return TYPE.FLAG
         else:
-            value, didAgentDie = self.updateAgentMap(coordinate)
+            value, didAgentDie = self.get_value(coordinate)
             if didAgentDie:
-
-                self.setAgentsCurrentState(agentIncorrectlyIdentified=coordinate)
+                self.setAgentsCurrentState(incorrect=coordinate)
             else:
-                self.setAgentsCurrentState(agentCorrectlyIdentified=coordinate)
-
+                self.setAgentsCurrentState(correct=coordinate)
             return value
 
     # Perform Basic Minesweeper Logic to Reduce Constraint Equations List
     def basicMineSweeperLogicReductions(self, coordinate):
 
         (x, y) = coordinate
-
         cells_to_uncover = []
         neighbors = self.adjacent_cells_agent_map(coordinate)
-
         # If coordinate is not a Clue Cell, Return Nothing to Uncover
-        if self.agent_map[x][y] == MineSweeper.UNKNOWN_CELL or self.agent_map[x][y] == MineSweeper.FLAG:
+        if self.agent_map[x][y] == TYPE.UNKNOWN or self.agent_map[x][y] == TYPE.FLAG:
             return cells_to_uncover, neighbors
-
-        if self.agent_map[x][y] == 0:  # If Clue Coordinate is equal to zero, uncover all neighbors
+        # If Clue Coordinate is equal to zero, uncover all neighbors
+        if self.agent_map[x][y] == 0:
             cells_to_uncover = neighbors
         else:
             knowns = list(filter(self.isKnown, neighbors))
             flags, unknowns = list(filter(self.isFlagged, neighbors)), list(filter(self.isUnknown, neighbors))
             numOfFlags, numOfAdjUnknowns, numOfAdjKnowns = len(flags), len(unknowns), len(knowns)
 
-            # If Coordinate's Clue Value - # of Adj. Flags = # Of Adj. Unknowns, then all Unknowns are Mines
+            # If Coordinate's Value - # of Adj. Flags = # Of Adj. Unknowns, then all Unknowns are Mines
             if self.agent_map[x][y] - numOfFlags == numOfAdjUnknowns:
-                self.updateAgentKnowledge(unknowns, isMineUpdate=True)
+                self.updateAgentKnowledge(unknowns, isMineUpdate=True, typeOfSelection=SELECTION.CONSTRAINT_REDUCTION)
 
-            # If Max # Adj. Neighbors (8) - Coordinate's Clue Value - # Adj. Known Cells = # Adj. Unknowns,
-            # then all Unknowns are Clues
+            # If Max Neighbors - Coordinate's Value - # Adj. Known Cells = # Adj. Unknowns, then all Unknowns are Clues
             elif (MineSweeper.MAX_NEIGHBORS - self.agent_map[x][y]) - numOfAdjKnowns == numOfAdjUnknowns:
                 cells_to_uncover.extend(unknowns)
 
         return cells_to_uncover, neighbors
 
-    def updateAgentKnowledge(self, uncover, isMineUpdate=False):
-        extend_stack = []
+    def updateAgentKnowledge(self, uncover, isMineUpdate=False, typeOfSelection=SELECTION.CONSTRAINT_REDUCTION):
+        updated_stack_elements = []
         clues, mines = [], []
         for coordinate in uncover:
-
-            if not isMineUpdate:
-                isClueOrMine = self.updateLocalMap(coordinate)
-            else:
-                isClueOrMine = MineSweeper.FLAG
-
             (x, y) = coordinate
-            if isClueOrMine == MineSweeper.FLAG:
-                self.agent_map[x][y] = MineSweeper.FLAG
+            value = self.updateLocalMap(coordinate, typeOfSelection=typeOfSelection) if not isMineUpdate else TYPE.FLAG
+            if value == TYPE.FLAG:
+                self.agent_map[x][y] = TYPE.FLAG
                 mines.append(coordinate)
                 if coordinate not in self.flagged:
                     self.flagged.append(coordinate)
                     self.isVisited[coordinate] = True
             else:
-                self.agent_map[x][y] = isClueOrMine
+                self.agent_map[x][y] = value
                 clues.append(coordinate)
                 self.createConstraintEquationForCoordinate(coordinate)
                 if not self.isVisited[coordinate]:
                     if coordinate not in self.known:
                         self.known.append(coordinate)
-                    extend_stack.append(coordinate)
+                    updated_stack_elements.append(coordinate)
 
         if len(clues) > 0:
-            self.updateConstraintEquations(clues, MineSweeper.CLUE)
+            self.updateConstraintEquations(clues, VALUE.CLUE)
         if len(mines) > 0:
-            self.updateConstraintEquations(mines, MineSweeper.MINE)
+            self.updateConstraintEquations(mines, VALUE.MINE)
 
-        return extend_stack
+        return updated_stack_elements
 
     ############################################################
     #                                                          #
@@ -123,40 +122,40 @@ class Agent(GenerateMineSweeperMap):
 
     def updateConstraintEquations(self, coordinates, typeOfUpdate):
         for coordinate in coordinates:
-            self.listOfConstraints.updateConstraintEquations(coordinate, typeOfUpdate)
+            self.listOfConstraints.update(coordinate, typeOfUpdate)
 
     def createConstraintEquationForCoordinate(self, coordinate):
         neighbors = self.adjacent_cells_agent_map(coordinate)
         unknowns, flagged = list(filter(self.isUnknown, neighbors)), list(filter(self.isFlagged, neighbors))
-        if len(unknowns) == 0:
-            return
-        (x, y) = coordinate
-        coordinatesClueValue = self.agent_map[x][y]
-        # Determine # of Neighboring Mines
-        numOfNeighboringMines = coordinatesClueValue - len(flagged)
-        self.listOfConstraints.addConstraintEquation(unknowns, numOfNeighboringMines)
+        if len(unknowns) > 0:
+            (x, y) = coordinate
+            numberOfNeighboringMines = self.agent_map[x][y] - len(flagged)
+            self.listOfConstraints.add(unknowns, numberOfNeighboringMines)
 
     def simplifyConstraintEquations(self):
-        self.listOfConstraints.performConstraintReductions()
-        # print("-------------------- CONSTRAINTS SIMPLIFY START --------------------")
-        # self.output_constraints()
-        # print("--------------------- CONSTRAINTS SIMPLIFY END ---------------------")
-        self.deduceClueAndMines()
+        self.listOfConstraints.reduce()
 
-    def deduceClueAndMines(self):
-        clues, mines = self.listOfConstraints.markCluesAndMines()
-        self.updateAgentKnowledge(clues)
-        self.updateAgentKnowledge(mines, isMineUpdate=True)
+    def deduceCluesAndMines(self):
+        while True:
+            clues, mines = self.listOfConstraints.deduce()
+            self.updateAgentKnowledge(clues)
+            self.updateAgentKnowledge(mines, isMineUpdate=True)
+            if len(clues) > 0 or len(mines) > 0:
+                self.simplifyConstraintEquations()
+            else:
+                break
 
-    def testPossibleConfigurations(self, unknowns):
-        TestConfigs = CreateProbabilityTree(self.minimize)
-        # self.output_agent_map()
-        nextCoordinateToVisit = TestConfigs.testPossibleConfigurations(self.listOfConstraints)
-        if nextCoordinateToVisit is not None:
-            # print("~~~~~Test Prob: ", nextCoordinateToVisit, "~~~~~")
-            return nextCoordinateToVisit
-        else:
-            return None
+    def pickNextCoordinate(self):
+        if self.minimize == MINIMIZE.COST or self.minimize == MINIMIZE.RISK:
+            configurations = CreateProbability(self.minimize, self.listOfConstraints)
+            configurations.predict()
+            nextCoordinateToVisit = configurations.get()
+            if nextCoordinateToVisit:
+                self.setAgentsCurrentState(predictions=configurations.getPredictions())
+                self.updateAgentKnowledge([nextCoordinateToVisit], typeOfSelection=SELECTION.PREDICTION)
+                return nextCoordinateToVisit, SELECTION.PREDICTION
+
+        return self.force_restart(), SELECTION.RESTART
 
     ############################################################
     #                                                          #
@@ -166,79 +165,76 @@ class Agent(GenerateMineSweeperMap):
     def solve(self):
 
         stack = [self.startingCoordinate]
-        restartCoordinates = []
-        randomSelect = []
-        predictionCoordinates = []
-        while len(stack) > 0 and (len(self.known) + len(self.flagged)) < (int(self.dimensions**2)):
-            print(len(self.known), " + ", len(self.flagged), " = ", int(self.dimensions**2))
-            # print("-------------------- CONSTRAINTS BEFORE START --------------------")
-            # self.output_constraints()
-            # print("--------------------- CONSTRAINTS BEFORE END ---------------------")
+        restartCoordinates, randomSelect, predictionCoordinates = [], [], []
+        observed, numberOfCoordinates = len(self.known) + len(self.flagged), int((self.dimensions ** 2))
+
+        while len(stack) > 0 and observed < numberOfCoordinates:
+            # print(len(self.known), " + ", len(self.flagged) , " = ", numberOfCoordinates)
             self.output_agent_map()
             coordinate = stack.pop()
             self.resetAgentsCurrentState()
-            self.setAgentsCurrentState(agentLocation=coordinate)
+            self.setAgentsCurrentState(location=coordinate)
 
-            # print("Mines: ",self.flagged)
+            # print("Mines: ", self.flagged)
             # print("Coordinate: ", coordinate)
             # print("Stack: ", stack)
 
             (x, y) = coordinate
-
-            if self.agent_map[x][y] != MineSweeper.FLAG and self.agent_map[x][y] != MineSweeper.UNKNOWN_CELL:
+            if self.agent_map[x][y] != TYPE.FLAG and self.agent_map[x][y] != TYPE.UNKNOWN:
                 self.createConstraintEquationForCoordinate(coordinate)
                 self.simplifyConstraintEquations()
-
-            # print("-------------------- CONSTRAINTS AFTER START --------------------")
-            # self.output_constraints()
-            # print("--------------------- CONSTRAINTS AFTER END ---------------------")
+                self.deduceCluesAndMines()
 
             if not self.isVisited[coordinate]:
                 self.isVisited[coordinate] = True
-
             else:
-                self.deduceClueAndMines()
+                self.simplifyConstraintEquations()
+                self.deduceCluesAndMines()
 
             uncover, neighbors = self.basicMineSweeperLogicReductions(coordinate)
             unknowns = list(filter(self.isUnknown, neighbors))
+            typeOfSelection = None
             if len(uncover) == 0:
+                if not self.minimize == MINIMIZE.NONE:
+                    nextCoordinateToVisit, typeOfRetrieval = self.pickNextCoordinate()
+                    uncover.append(nextCoordinateToVisit)
 
-                if len(unknowns) == 1:
-                    uncover.append(unknowns[0])
+                    if typeOfRetrieval == SELECTION.PREDICTION:
+                        predictionCoordinates.append(nextCoordinateToVisit)
+
+                    else:
+                        restartCoordinates.append(nextCoordinateToVisit)
+
                 else:
-                    if self.minimize == MineSweeper.COST or self.minimize == MineSweeper.RISK:
-                        minimumProbCoordinate = self.testPossibleConfigurations(unknowns)
-                        if minimumProbCoordinate is not None:
-                            uncover.append(minimumProbCoordinate)
-                            predictionCoordinates.append(uncover[-1])
-                        else:
-                            uncover.append(self.forceRestart())
-                            restartCoordinates.append(uncover[-1])
+                    if len(unknowns) == 1:
+                        uncover.append(unknowns[0])
+                        typeOfSelection = SELECTION.RANDOM_SELECT
                     else:
                         knowns = list(filter(self.isKnown, neighbors))
                         numOfAdjUnknowns, numOfAdjKnowns = len(unknowns), len(knowns)
                         if numOfAdjKnowns < 2 and len(uncover) == 0 and numOfAdjUnknowns > 1:
-                            uncover.append(self.random_select(unknowns))
+                            uncover.append(random_select(unknowns))
                             randomSelect.append(uncover[-1])
+                            typeOfSelection = SELECTION.RANDOM_SELECT
+            else:
+                typeOfSelection = SELECTION.CONSTRAINT_REDUCTION
 
             if len(uncover) > 0:
-                stack.extend(self.updateAgentKnowledge(uncover))
+                if not typeOfSelection:  # Agent will have already updated knowledge in method pickNextCoordinate()
+                    stack.extend(uncover)
+                else:
+                    stack.extend(self.updateAgentKnowledge(uncover, typeOfSelection=typeOfSelection))
 
             if len(stack) == 0:
-                if self.minimize == MineSweeper.COST or self.minimize == MineSweeper.RISK:
-                    minimumProbCoordinate = self.testPossibleConfigurations(unknowns)
-                    if minimumProbCoordinate is not None:
-                        predictionCoordinates.append(minimumProbCoordinate)
-                        stack.append(minimumProbCoordinate)
-                        if minimumProbCoordinate not in self.known:
-                            self.known.append(minimumProbCoordinate)
-                    else:
-                        stack.append(self.forceRestart())
-                        restartCoordinates.append(stack[-1])
-                else:
-                    stack.append(self.forceRestart()) # Force Restart
-                    restartCoordinates.append(stack[-1])
+                nextCoordinateToVisit, typeOfRetrieval = self.pickNextCoordinate()
 
+                if typeOfRetrieval == SELECTION.PREDICTION:
+                    predictionCoordinates.append(nextCoordinateToVisit)
+
+                else:
+                    restartCoordinates.append(nextCoordinateToVisit)
+
+            observed = len(self.known) + len(self.flagged)
 
         self.output_agent_map()
         print("Restart: ", restartCoordinates)
@@ -251,46 +247,26 @@ class Agent(GenerateMineSweeperMap):
                 incorrect.append(mine)
         print("Prediction Mines: ", incorrect)
 
-    def forceRestart(self):
+    def force_restart(self):
         unobservedCoordinates = []
         for x in range(self.dimensions):
             for y in range(self.dimensions):
-                if not self.isVisited[(x, y)]:
+                if self.agent_map[x][y] == TYPE.UNKNOWN:
                     unobservedCoordinates.append((x, y))
 
-        while len(unobservedCoordinates) > 1:
-
-            index = randint(0, len(unobservedCoordinates) - 1)
-            visitCoordinate = unobservedCoordinates[index]
-            (x, y) = visitCoordinate
-
-            isClueOrMine = self.updateLocalMap(visitCoordinate)
-            self.agent_map[x][y] = isClueOrMine
-
-            if isClueOrMine == MineSweeper.FLAG:
-                self.updateConstraintEquations([visitCoordinate], MineSweeper.MINE)
-                if visitCoordinate not in self.flagged:
-                    self.flagged.append(visitCoordinate)
+        while len(unobservedCoordinates) > 0:
+            if len(unobservedCoordinates) > 1:
+                index = randint(0, len(unobservedCoordinates) - 1)
             else:
-                self.updateConstraintEquations([visitCoordinate], MineSweeper.CLUE)
-                if visitCoordinate not in self.known:
-                    self.known.append(visitCoordinate)
-                return visitCoordinate
+                index = 0
+            visitCoordinate = unobservedCoordinates[index]
+            isValid = self.updateAgentKnowledge([visitCoordinate], typeOfSelection=SELECTION.RESTART)
+            if len(isValid) > 0:
+                return isValid[0]
+            else:
+                unobservedCoordinates.remove(visitCoordinate)
 
-        if len(unobservedCoordinates) == 1:
-            return unobservedCoordinates[0]
-        else:
-            return self.startingCoordinate # should never execute
-
-    # Randomly Select From List
-    def random_select(self, neighbors):
-        if len(neighbors) == 0:
-            return []
-        elif len(neighbors) == 1:
-            return neighbors[0]
-        else:
-            index = randint(0, len(neighbors) - 1)
-            return neighbors[index]
+        return self.startingCoordinate  # should never execute
 
     ############################################################
     #                                                          #
@@ -301,21 +277,21 @@ class Agent(GenerateMineSweeperMap):
 
     def isKnown(self, coordinate):
         (x, y) = coordinate
-        return self.agent_map[x][y] != MineSweeper.UNKNOWN_CELL and self.agent_map[x][y] != MineSweeper.FLAG
+        return self.agent_map[x][y] != TYPE.UNKNOWN and self.agent_map[x][y] != TYPE.FLAG
 
     def isUnknown(self, coordinate):
         (x, y) = coordinate
-        return self.agent_map[x][y] == MineSweeper.UNKNOWN_CELL
+        return self.agent_map[x][y] == TYPE.UNKNOWN
 
     def isFlagged(self, coordinate):
         (x, y) = coordinate
-        return self.agent_map[x][y] == MineSweeper.FLAG
+        return self.agent_map[x][y] == TYPE.FLAG
 
     def adjacent_cells_agent_map(self, coordinate):
         (x, y) = coordinate
         neighbors = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1),
                      (x + 1, y + 1), (x + 1, y - 1), (x - 1, y + 1), (x - 1, y - 1)]
-        neighbors = list(filter(self.isCellInMap, neighbors))
+        neighbors = list(filter(self.inbounds, neighbors))
         return neighbors
 
     ############################################################
@@ -324,27 +300,37 @@ class Agent(GenerateMineSweeperMap):
     #                                                          #
     ############################################################
 
-    def setAgentsCurrentState(self, agentLocation=None, agentIncorrectlyIdentified=None, agentCorrectlyIdentified=None):
+    def setAgentsCurrentState(self, location=None, incorrect=None, correct=None, typeOfSelection=None, predictions=None):
 
-        if agentLocation:
-            self.agentCurrentLocation = agentLocation
+        if location:
+            self.agentCurrentLocation = location
 
-        if agentIncorrectlyIdentified:
-            self.agentIncorrectlyIdentified.append(agentIncorrectlyIdentified)
+        if incorrect:
+            self.agentIncorrectlyIdentified.append(incorrect)
 
-        if agentCorrectlyIdentified:
-            self.agentCorrectlyIdentified.append(agentCorrectlyIdentified)
+        if correct:
+            self.agentCorrectlyIdentified.append(correct)
+
+        if typeOfSelection:
+            self.agentSelectionType = typeOfSelection
+
+        if predictions:
+            self.agentPredictions = predictions
 
     def resetAgentsCurrentState(self):
         oldAgentState = {
 
-            'agent-location': self.agentCurrentLocation,
-            'agentIncorrectlyIdentified': self.agentIncorrectlyIdentified.copy(),
-            'agentCorrectlyIdentified': self.agentCorrectlyIdentified.copy(),
+            'location': self.agentCurrentLocation,
+            'incorrectlyIdentified': self.agentIncorrectlyIdentified.copy(),
+            'correctlyIdentified': self.agentCorrectlyIdentified.copy(),
+            'selectionType': self.agentSelectionType,
+            'predictions': self.agentPredictions.copy(),
 
-            }
+        }
         self.agentStateCache.append(oldAgentState)
         self.agentCorrectlyIdentified, self.agentIncorrectlyIdentified = [], []
+        self.agentSelectionType = None
+        self.agentPredictions = []
 
     ############################################################
     #                                                          #
@@ -353,9 +339,9 @@ class Agent(GenerateMineSweeperMap):
     ############################################################
     def output_agent_map(self):
         print(" ------------- AGENTS MAP ------------- ")
-        print("|---|", end = '')
+        print("|---|", end='')
         for x in range(self.dimensions):
-            print( "  %d|" % x, end='')
+            print("  %d|" % x, end='')
         print()
         for x in range(self.dimensions):
             print("| %d " % x, end='')
@@ -366,4 +352,4 @@ class Agent(GenerateMineSweeperMap):
         print(" ------------- END OF MAP ------------- ")
 
     def output_constraints(self):
-        self.listOfConstraints.output_constraints()
+        self.listOfConstraints.output()
