@@ -158,11 +158,9 @@ class CreateProbability:
 
             clue_tree = Tree(root_coordinate, constraints.get(), VALUE.CLUE, self.minimize)
             clue_tree.COMPUTE()
-            # clue_tree.output()
 
             mine_tree = Tree(root_coordinate, constraints.get(), VALUE.MINE, self.minimize)
             mine_tree.COMPUTE()
-            # mine_tree.output()
 
             self.calculate(clue_tree=clue_tree, mine_tree=mine_tree)
 
