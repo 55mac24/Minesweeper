@@ -62,7 +62,7 @@ class Tree:
         self.paths = []
         self.likelihoodOfCellAsMine, self.total = {}, {}
 
-    # Iteratively create Tree branch where that satisfy constraints by test binary constraint values for coordinates
+    # Iteratively create tree branches that satisfy constraints by testing binary constraint values for coordinates
     def create(self):
         stack = [self.root]
 
