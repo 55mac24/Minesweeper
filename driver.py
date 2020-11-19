@@ -1,26 +1,26 @@
 from agent import Agent
-
-from definitionsForAgent import MineSweeper
+from definitionsForAgent import MINIMIZE
 from copy import deepcopy
 import json
-
 from random import randint
+
 
 def computePerformanceOfAgent(results):
     totalSum = 0
     for result in results:
         totalSum += result
     avg = totalSum/(len(results))
-    return avg #(round(avg,2) * 100)
+    return avg  # (round(avg,2) * 100)
+
 
 def computeMineDensityPerformance(results):
     density_result_avg = {}
     for density_, test_results in results.items():
-        # print(test_results)
         density_result_avg[density_] = computePerformanceOfAgent(test_results)
     return density_result_avg
 
-dimensions = 6
+
+dimensions = 10
 density = 0.1
 
 density_offset = 0.025
@@ -28,7 +28,7 @@ density_offset = 0.025
 trials = 1
 subTrials = 1
 
-minimize = MineSweeper.NONE
+minimize = MINIMIZE.COST
 
 mines = int((dimensions ** 2) * density)
 mine_densities = [density]
@@ -63,7 +63,6 @@ while trialsConducted < trials:
         agentCachedState = deepcopy(improved_performance_v2_5.agentStateCache)
     # improved_performance_v2_5.output_agent_map()
 
-
     print("Completed trial #%d" % trialsConducted, " with mine density %.2f" % density)
 
     trialsConducted = trialsConducted + 1
@@ -80,9 +79,10 @@ while trialsConducted < trials:
         density = density + density_offset
         if density > 0.75:
             break
-            # density = 0.1
-        mines = int((dimensions ** 2) * density)
-        numberOfMines.append(mines)
+
+        if trials > 1:
+            mines = int((dimensions ** 2) * density)
+            numberOfMines.append(mines)
 
 '''
 improved_avg_v2_5 = computePerformanceOfAgent(improved_res_v2_5)
@@ -92,9 +92,7 @@ print(improved_res_v2_5)
 print("Average Performance of v2.5 : %.2f" % improved_avg_v2_5,end='')
 print("%")
 '''
-print(numberOfMines)
-# print(improved_res_v2_5)
-# print(basic_res_v2)
+print("Nume of Mines: ", numberOfMines)
 improved_avg_v2_5 = computeMineDensityPerformance(improved_res_v2_5)
 print("Average Performance of v2.5 : ", improved_avg_v2_5)
 
