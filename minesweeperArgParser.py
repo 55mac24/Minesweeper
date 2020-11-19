@@ -1,5 +1,5 @@
 import argparse
-from definitionsForAgent import MineSweeper
+from definitionsForAgent import MINIMIZE
 
 dimension_help_msg = "The dimension for the Minesweeper map"
 density_help_msg = "The mine density for the Minesweeper map in the range 0 < density < 1.0"
@@ -22,30 +22,31 @@ args = parser.parse_args()
 
 dimensions, density, density_offset, trials, subTrials, minimize = None, None, None, None, None, None
 
-if args.dimensions:
+if 3 < args.dimensions < 256:
 
     dimensions = args.dimensions
     print(dimensions * 2)
+
 else:
     dimensions = 10
 
-if args.density:
+if 0.0 < args.density < 1.0:
     print("Density: ", args.density)
     density = args.density
 else:
     density = 0.1
-if args.offset:
+if 0.0 < args.offset <= 0.5:
     print("Offset: ", args.offset)
     density_offset = args.offset
 else:
     density_offset = 0.025
 
-if args.trials:
+if 0 < args.trials <= 100:
     print("Trials: ", args.trials)
     trials = args.trials
 else:
     trials = 1
-if args.subtrials:
+if 0 < args.subtrials <= 100:
     print("Subtrials: ", args.subtrials)
     subTrials = args.subtrials
 else:
@@ -56,14 +57,14 @@ if args.minimize:
     print("Minimize: ", args.minimize)
     arg_minimize = args.minimize.upper()
 else:
-    arg_minimize = MineSweeper.NONE
+    arg_minimize = MINIMIZE.NONE
 
-if arg_minimize == MineSweeper.COST:
-    minimize = MineSweeper.COST
-elif arg_minimize == MineSweeper.RISK:
-    minimize = MineSweeper.RISK
+if arg_minimize == MINIMIZE.COST:
+    minimize = MINIMIZE.COST
+elif arg_minimize == MINIMIZE.RISK:
+    minimize = MINIMIZE.RISK
 else:
-    minimize = MineSweeper.NONE
+    minimize = MINIMIZE.NONE
 
 print("Dimensions: %d | Density: %.2f | Density Offset: %.4f | " % (dimensions, density, density_offset), end='')
 print("Trials: %d | Sub-Trials: %d | Minimize: %s" % (trials, subTrials, minimize))
