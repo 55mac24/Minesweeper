@@ -1,20 +1,49 @@
 from collections import Counter
 from random import randint
 from constraintList import ListOfConstraints
-from definitionsForAgent import MineSweeper
+from definitionsForAgent import VALUE, MINIMIZE
 from tree import Tree
 
-class CreateProbabilityTree:
-    def __init__(self, minimize):
-        self.minimize = minimize
 
-    def minimizeCost(self, predictionsOfCellsAsMine):
+# Get Random Coordinate From List of Coordinates
+def random_coordinate(coordinates):
+    if len(coordinates) > 0:
+        index = randint(0, len(coordinates) - 1)
+        return coordinates[index]
+    else:
+        return None
+
+
+def create2DConstraintList(constraints_list):
+    constraint_list_2D = []
+    for constraint_list in constraints_list:
+        constraint_list_i = ListOfConstraints()
+        constraint_list_i.set(constraint_list)
+        constraint_list_2D.append(constraint_list_i)
+    return constraint_list_2D
+
+
+def combineTreePredictions(valuesFromClueTree, valuesFromMineTree):
+    merged = dict(Counter(valuesFromClueTree) + Counter(valuesFromMineTree))
+    return merged
+
+
+class CreateProbability:
+    def __init__(self, minimize, original_constraints):
+        self.minimize = minimize
+        self.original_constraints = original_constraints
+
+        self.cellsAsClueObservations, self.cellsAsMineObservations, self.total = {}, {}, {}
+        self.cellsDeducedIfClue, self.cellsDeducedIfMine = {}, {}
+
+        self.predictions = []
+
+    def minimizeCost(self):
         candidates = []
         min_cost = float('inf')
-        if len(predictionsOfCellsAsMine) > 0:
-            predictionsOfCellsAsMine.sort(key=lambda x: x[1])
-            min_cost = predictionsOfCellsAsMine[0][1]
-            for predictionForCoordinate in predictionsOfCellsAsMine:
+        if len(self.predictions) > 0:
+            min_cost = self.predictions[0][1]
+            for predictionForCoordinate in self.predictions:
                 (coordinate, likelihood) = predictionForCoordinate
                 if likelihood == min_cost:
                     candidates.append(coordinate)
@@ -27,20 +56,20 @@ class CreateProbabilityTree:
             random_index = randint(0, len(candidates) - 1)
             return candidates[random_index], min_cost
 
-    def minimizeRisk(self, cellsThatCanBeDeducedIfClue, cellsThatCanBeDeducedIfMine, predictionsOfCellAsMine):
-
+    def minimizeRisk(self):
         riskOfCoordinates, risk_values = [], []
-        for prediction in predictionsOfCellAsMine:
-            cell, q = prediction
-            if cell in cellsThatCanBeDeducedIfClue and cell in cellsThatCanBeDeducedIfMine:
-                risk = (q * cellsThatCanBeDeducedIfClue[cell]) + ((1 - q) * cellsThatCanBeDeducedIfMine[cell])
-            elif cell in cellsThatCanBeDeducedIfClue:
-                risk = (q * cellsThatCanBeDeducedIfClue[cell])
-            elif cell in cellsThatCanBeDeducedIfMine:
-                risk = ((1 - q) * cellsThatCanBeDeducedIfMine[cell])
+        for prediction in self.predictions:
+            coordinate, q = prediction
+            if coordinate in self.cellsDeducedIfClue and coordinate in self.cellsDeducedIfMine:
+                risk = (q * self.cellsDeducedIfClue[coordinate]) + ((1 - q) * self.cellsDeducedIfMine[coordinate])
+            elif coordinate in self.cellsDeducedIfClue:
+                risk = (q * self.cellsDeducedIfClue[coordinate])
+            elif coordinate in self.cellsDeducedIfMine:
+                risk = ((1 - q) * self.cellsDeducedIfMine[coordinate])
             else:
                 continue
-            riskOfCoordinates.append((cell, risk))
+
+            riskOfCoordinates.append((coordinate, risk))
             risk_values.append(risk)
 
         candidates = []
@@ -51,6 +80,7 @@ class CreateProbabilityTree:
                 (coordinate, risk) = riskOfCoordinate
                 if risk == min_risk:
                     candidates.append(coordinate)
+
         if len(candidates) == 0:
             return None, None
         elif len(candidates) == 1:
@@ -59,102 +89,150 @@ class CreateProbabilityTree:
             random_index = randint(0, len(candidates) - 1)
             return candidates[random_index], min_risk
 
-    def combineCellValues(self, valuesFromClueTree, valuesFromMineTree):
-        # print("From Clue Tree: ", valuesFromClueTree)
-        # print("From Mine Tree: ", valuesFromMineTree)
-        merged = dict(Counter(valuesFromClueTree) + Counter(valuesFromMineTree))
-        return merged
-
-    def createMineProbability(self, cellsDeducedFromMineTree, total):
-
-        probability = []
-        for cell, observed in total.items():
-            predictionForMine = 0
-            if cell in cellsDeducedFromMineTree:
-                predictionForMine = cellsDeducedFromMineTree[cell]
-
-            cell_mine_probability = [cell, 0.0]
+    def createMineProbability(self):
+        for coordinate, observed in self.total.items():
+            predictionForMine = 0.0
+            if coordinate in self.cellsAsMineObservations:
+                predictionForMine = self.cellsAsMineObservations[coordinate]
+            cell_mine_probability = [coordinate, 0.0]
             if observed > 0:
                 cell_mine_probability[1] = predictionForMine / observed
-            probability.append(tuple(cell_mine_probability))
+            self.predictions.append(tuple(cell_mine_probability))
+        self.predictions.sort(key=lambda x: x[1])
 
-        probability.sort(key = lambda x: x[1])
-        # print("Probabilities: ", probability)
+    def getPredictions(self):
+        predictions = []
+        for prediction_i in self.predictions:
+            (coordinate_j, prediction_j) = prediction_i
+            coordinate = (int(coordinate_j[0]), int(coordinate_j[1]))
+            prediction = float(prediction_j)
+            predictions.append((coordinate, prediction))
+        return predictions
 
-        return probability
+    def calculate(self, clue_tree, mine_tree):
 
-    def create2DConstraintList(self, constraints_list):
-        constraint_list_2D = []
-        for constraint_list in constraints_list:
-            constraint_list_i = ListOfConstraints()
-            for union_i in constraint_list:
-                constraint_list_i.addConstraintEquation(union_i.constraint[:], int(union_i.value))
-            constraint_list_2D.append(constraint_list_i)
-        return constraint_list_2D
+        clues_ClueTree, clues_MineTree = clue_tree.cellAsClue, mine_tree.cellAsClue
+        mines_ClueTree, mines_MineTree = clue_tree.cellAsMine, mine_tree.cellAsMine
 
-    def testPossibleConfigurations(self, constraints):
+        cluesDeduced_ClueTree, cluesDeduced_MineTree = clue_tree.cellsDeducedIfClue, mine_tree.cellsDeducedIfClue
+        minesDeduced_ClueTree, minesDeduced_MineTree = clue_tree.cellsDeducedIfMine, mine_tree.cellsDeducedIfMine
 
-        testCell = None
-        constraints.output_constraints()
-        disjointConstraintsSets = constraints.getDisjointConstraints(constraints.getConstraintList_RAW())
+        # print("------------- Sub Combining Start -------------")
 
-        disjointConstraintsList = self.create2DConstraintList(disjointConstraintsSets)
-        cellsAsClueObservations, cellsAsMineObservations, total = {}, {}, {}
+        tempCellsAsClueObservations = combineTreePredictions(self.cellsAsClueObservations, clues_ClueTree)
+        self.cellsAsClueObservations = combineTreePredictions(tempCellsAsClueObservations, clues_MineTree)
 
-        cellsDeducedIfClue, cellsDeducedIfMine = {}, {}
+        tempCellsAsMineObservations = combineTreePredictions(self.cellsAsMineObservations, mines_ClueTree)
+        self.cellsAsMineObservations = combineTreePredictions(tempCellsAsMineObservations, mines_MineTree)
 
-        print("--------------- Combining Start ---------------")
-        for unionConstraint in disjointConstraintsList:
-            exhaustive_constraints = unionConstraint.getListOfConstraintCoordinates()
-            testCell = unionConstraint.getRandomCellForTree(exhaustive_constraints, testCell)
-            print("TEST CELL: ", testCell)
+        tempCellsDeducedIfClue = combineTreePredictions(self.cellsDeducedIfClue, cluesDeduced_ClueTree)
+        self.cellsDeducedIfClue = combineTreePredictions(tempCellsDeducedIfClue, cluesDeduced_MineTree)
 
-            clueTree = Tree(testCell, unionConstraint.getConstraintList_RAW(), MineSweeper.CLUE, self.minimize, None)
-            clueTree.createCSPProbabilityTree()
-            clueTree.getCellTypePredictions()
+        tempCellsDeducedIfMine = combineTreePredictions(self.cellsDeducedIfMine, minesDeduced_ClueTree)
+        self.cellsDeducedIfMine = combineTreePredictions(tempCellsDeducedIfMine, minesDeduced_MineTree)
 
-            mineTree = Tree(testCell, unionConstraint.getConstraintList_RAW(), MineSweeper.MINE, self.minimize, clueTree.resolved_paths)
-            mineTree.createCSPProbabilityTree()
-            mineTree.getCellTypePredictions()
+        tempTotal = combineTreePredictions(self.total, self.cellsAsClueObservations)
+        self.total = combineTreePredictions(tempTotal, self.cellsAsMineObservations)
 
-            clues_ClueTree, clues_MineTree = clueTree.cellAsClue, mineTree.cellAsClue
-            mines_ClueTree, mines_MineTree = clueTree.cellAsMine, mineTree.cellAsMine
+        # print("Clue Observations: ", self.cellsAsClueObservations)
+        # print("Mine Observations: ", self.cellsAsMineObservations)
+        # print("Total: ", self.total)
 
-            cluesDeduced_ClueTree, cluesDeduced_MineTree = clueTree.cellsDeducedIfClue, mineTree.cellsDeducedIfClue
-            minesDeduced_ClueTree, minesDeduced_MineTree = clueTree.cellsDeducedIfMine, mineTree.cellsDeducedIfMine
+    def predict(self):
+        if self.original_constraints.length() < 1:
+            return
 
-            print("------------- Sub Combining Start -------------")
+        independent_sets = self.independent_sets()
+        independentConstraintListSets = create2DConstraintList(independent_sets)
 
-            tempCellsAsClueObservations = self.combineCellValues(cellsAsClueObservations, clues_ClueTree)
-            cellsAsClueObservations = self.combineCellValues(tempCellsAsClueObservations, clues_MineTree)
+        # print("--------------- Combining Start ---------------")
 
-            tempCellsAsMineObservations = self.combineCellValues(cellsAsMineObservations, mines_ClueTree)
-            cellsAsMineObservations = self.combineCellValues(tempCellsAsMineObservations, mines_MineTree)
+        for constraints in independentConstraintListSets:
 
-            tempCellsDeducedIfClue = self.combineCellValues(cellsDeducedIfClue, cluesDeduced_ClueTree)
-            cellsDeducedIfClue = self.combineCellValues(tempCellsDeducedIfClue, cluesDeduced_MineTree)
+            coordinates = constraints.coordinates()
+            root_coordinate = random_coordinate(coordinates)
 
-            tempCellsDeducedIfMine = self.combineCellValues(cellsDeducedIfMine, minesDeduced_ClueTree)
-            cellsDeducedIfMine = self.combineCellValues(tempCellsDeducedIfMine, minesDeduced_MineTree)
+            # print("TEST CELL: ", root_coordinate)
+            if not root_coordinate:
+                continue
 
-            tempTotal = self.combineCellValues(total, cellsAsClueObservations)
-            total = self.combineCellValues(tempTotal, cellsAsMineObservations)
-            print("Clue Observations: ", cellsAsClueObservations)
-            print("Mine Observations: ", cellsAsMineObservations)
-            print("Total: ", total)
+            clue_tree = Tree(root_coordinate, constraints.get(), VALUE.CLUE, self.minimize)
+            clue_tree.COMPUTE()
+            # clue_tree.output()
 
-        predictionsOfCellsAsMine = self.createMineProbability(cellsAsMineObservations, total)
-        print("Predictions: ", predictionsOfCellsAsMine)
-        print("---------------- Combining End ----------------")
+            mine_tree = Tree(root_coordinate, constraints.get(), VALUE.MINE, self.minimize)
+            mine_tree.COMPUTE()
+            # mine_tree.output()
 
-        if self.minimize == MineSweeper.RISK:
+            self.calculate(clue_tree=clue_tree, mine_tree=mine_tree)
 
-            (coordinate, risk) = self.minimizeRisk(cellsDeducedIfClue, cellsDeducedIfMine,predictionsOfCellsAsMine)
-            print("Pick: ", coordinate, " Risk: ", risk)
-            return coordinate
+        self.createMineProbability()
 
-        else:
+        # if len(self.predictions) > 0:
+        #     print("Predictions: ", self.predictions)
 
-            (coordinate, cost) = self.minimizeCost(predictionsOfCellsAsMine)
-            print("Pick: ", coordinate, " Cost: ", cost)
-            return coordinate
+        #print("---------------- Combining End ----------------")
+
+    def get(self):
+        coordinate, probability = self.minimizeRisk() if self.minimize == MINIMIZE.RISK else self.minimizeCost()
+
+        # if coordinate:
+        #     if self.minimize == MINIMIZE.RISK:
+        #         print("Pick: ", coordinate, " Risk: ", probability)
+        #
+        #     else:
+        #         print("Pick: ", coordinate, " Cost: ", probability)
+        # else:
+        #     print("Pick: Force Restart")
+
+        return coordinate
+
+    # Get Independent Sets of Constraint Equations
+    def independent_sets(self):
+        constraint_list_coordinates_set = set()
+        constraint_list = self.original_constraints.get()
+        for equation in constraint_list:
+            for coordinate in equation.constraint:
+                if coordinate not in constraint_list_coordinates_set:
+                    constraint_list_coordinates_set.add(coordinate)
+
+        constraint_list_coordinates = list(constraint_list_coordinates_set)
+        union_set_index = {coordinate: None for coordinate in constraint_list_coordinates}
+
+        disjointConstraints = []
+        for coordinate in constraint_list_coordinates:
+            if union_set_index[coordinate] is not None:
+                continue
+
+            index = 0
+            while len(constraint_list) > 0 and index < len(constraint_list):
+                if coordinate in constraint_list[index].constraint:
+                    insert_set_index = -1
+                    for joint_coordinate in constraint_list[index].constraint:
+                        if union_set_index[joint_coordinate] is not None:
+                            insert_set_index = union_set_index[joint_coordinate]
+                            break
+                    if insert_set_index == -1:
+                        insert_set_index = len(disjointConstraints)
+
+                    for joint_coordinate in constraint_list[index].constraint:
+                        union_set_index[joint_coordinate] = insert_set_index
+
+                    if insert_set_index == len(disjointConstraints):
+                        disjointConstraints.append([])
+                        disjointConstraints[insert_set_index].append(constraint_list[index])
+                    else:
+                        disjointConstraints[insert_set_index].append(constraint_list[index])
+
+                    constraint_list.remove(constraint_list[index])
+                else:
+                    index += 1
+        # count = 0
+        # print(union_set_index)
+        # for union in disjointConstraints:
+        #     print("Set #%d: " % (count), end='')
+        #     for equation in union:
+        #         print(equation.constraint, " ", equation.value, " | ", end='')
+        #     print()
+        #     count += 1
+        return disjointConstraints
