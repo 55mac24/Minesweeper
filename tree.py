@@ -1,4 +1,4 @@
-from definitionsForAgent import VALUE, MINIMIZE
+from definitionsForAgent import MineSweeper, VALUE, MINIMIZE
 from constraintList import ListOfConstraints
 
 
@@ -49,11 +49,12 @@ def updateCellDictWithValue(cells, dictionary, coordinate=None, value=1):
 
 
 class Tree:
-    def __init__(self, clue, constraints, cellType, minimizeCostOrRisk):
+    def __init__(self, clue, constraints, cellType, minimizeCostOrRisk, MODE):
 
         self.root = Leaf(clue, constraints, cellType)
 
         self.minimizeCostOrRisk = minimizeCostOrRisk
+        self.MODE = MODE
 
         self.cellAsClue, self.cellAsMine = {}, {}
         self.cellsDeducedIfClue, self.cellsDeducedIfMine = {}, {}
@@ -112,7 +113,9 @@ class Tree:
     # Compute Coordinate Likelihoods as Clues and Mines Based on Tree Branches
     def predict(self):
         self.traverse([], self.root)
-        # print("-------------------- TEST CELL PREDICTION START --------------------")
+        count = 0
+        if self.MODE == MineSweeper.DEBUG:
+            print("-------------------- TEST CELL PREDICTION START --------------------")
         for path in self.paths:
             clues_in_path, mines_in_path = set(), set()
             temp_deduced_clues, temp_deduced_mines = {}, {}
@@ -123,7 +126,6 @@ class Tree:
                     isValidConfiguration = False
                     break
 
-                # print("Cell: ", cell, "Cell Type: ", typeOfCell, "Clues:", clues, "Mines: ", mines, ' ---> ', end='')
                 if coordinate and (typeOfCell == VALUE.CLUE or typeOfCell == VALUE.MINE):
                     if typeOfCell == VALUE.CLUE:
                         if coordinate not in clues_in_path:
@@ -152,16 +154,20 @@ class Tree:
                                                  value=(temp_deduced_clues[coordinate]))
                 for coordinate in temp_deduced_mines:
                     updateCellDictWithValue(cells=[coordinate], dictionary=self.cellsDeducedIfMine,
-                                                 value=(temp_deduced_mines[coordinate]))
+                                            value=(temp_deduced_mines[coordinate]))
 
-                # print("Entry #%d" % (count) ," | Clues: ", clues_in_path, " | Mines: ", mines_in_path)
                 updateCellDictWithValue(cells=list(clues_in_path), dictionary=self.cellAsClue)
                 updateCellDictWithValue(cells=list(mines_in_path), dictionary=self.cellAsMine)
-                # count += 1
-        # print("Possibilities: ", count, " | ", len(self.paths))
-        # print("Clue Total: ", self.cellAsClue)
-        # print("Mine Total: ", self.cellAsMine)
-        # print("--------------------  TEST CELL PREDICTION END  --------------------")
+
+                if self.MODE == MineSweeper.DEBUG:
+                    print("Entry #%d" % count, " | Clues: ", clues_in_path, " | Mines: ", mines_in_path)
+                    count += 1
+
+        if self.MODE == MineSweeper.DEBUG:
+            print("Possibilities: ", count, " | ", len(self.paths))
+            print("Clue Total: ", self.cellAsClue)
+            print("Mine Total: ", self.cellAsMine)
+            print("--------------------  TEST CELL PREDICTION END  --------------------")
 
     # Find all root-to-leaf paths. Each path is a potential configuration in the Minesweeper Map.
     def traverse(self, stack, node):

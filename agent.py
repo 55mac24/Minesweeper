@@ -16,20 +16,38 @@ def random_select(neighbors):
         return neighbors[index]
 
 
+def copy_tuple(tuple_to_copy):
+    tuple_copy = (int(tuple_to_copy[0]), int(tuple_to_copy[1]))
+    return tuple_copy
+
+
+def copy_list(list_to_copy):
+    list_copy = []
+    for coordinate_i in list_to_copy:
+        if type(coordinate_i[0]) is tuple:
+            coordinate_j, probability = copy_tuple(coordinate_i[0]), float(coordinate_i[1])
+            list_copy.append((coordinate_j, probability))
+        else:
+            list_copy.append(copy_tuple(coordinate_i))
+    return list_copy
+
 class Agent(GenerateMineSweeperMap):
-    def __init__(self, dimensions, mines, startingCoordinate, isMapPassed, minimizeCostOrRisk):
+    def __init__(self, dimensions, mines, startingCoordinate, isMapPassed, minimizeCostOrRisk, MODE):
         super().__init__(dimensions, mines, startingCoordinate, isMapPassed)
 
         self.create_map()  # Initialize Map To Solve
-        self.print_hidden_map()  # Print Map Hidden From Agent
 
         self.minimize = minimizeCostOrRisk
+        self.MODE = MODE
+
+        if self.MODE == MineSweeper.DEBUG:
+            self.print_hidden_map()  # Print the Map Hidden From Agent
 
         self.startingCoordinate = startingCoordinate
 
-        self.agentCurrentLocation = self.startingCoordinate
+        self.agentCurrentLocation = None
         self.agentStateCache, self.agentCorrectlyIdentified, self.agentIncorrectlyIdentified = [], [], []
-        self.agentSelectionType, self.agentPredictions = SELECTION.START, []
+        self.agentSelectionType, self.agentPredictions = None, []
 
         self.isVisited = {}
         self.flagged, self.known = [], [self.startingCoordinate]
@@ -147,7 +165,7 @@ class Agent(GenerateMineSweeperMap):
 
     def pickNextCoordinate(self):
         if self.minimize == MINIMIZE.COST or self.minimize == MINIMIZE.RISK:
-            configurations = CreateProbability(self.minimize, self.listOfConstraints)
+            configurations = CreateProbability(self.minimize, self.listOfConstraints, self.MODE)
             configurations.predict()
             nextCoordinateToVisit = configurations.get()
             if nextCoordinateToVisit:
@@ -169,15 +187,17 @@ class Agent(GenerateMineSweeperMap):
         observed, numberOfCoordinates = len(self.known) + len(self.flagged), int((self.dimensions ** 2))
 
         while len(stack) > 0 and observed < numberOfCoordinates:
-            # print(len(self.known), " + ", len(self.flagged) , " = ", numberOfCoordinates)
-            self.output_agent_map()
+            if self.MODE == MineSweeper.DEBUG:
+                print(len(self.known), " + ", len(self.flagged) , " = ", numberOfCoordinates)
+
             coordinate = stack.pop()
             self.resetAgentsCurrentState()
             self.setAgentsCurrentState(location=coordinate)
-
-            # print("Mines: ", self.flagged)
-            # print("Coordinate: ", coordinate)
-            # print("Stack: ", stack)
+            if self.MODE == MineSweeper.DEBUG:
+                self.output_agent_map()
+                print("Mines: ", self.flagged)
+                print("Coordinate: ", coordinate)
+                print("Stack: ", stack)
 
             (x, y) = coordinate
             if self.agent_map[x][y] != TYPE.FLAG and self.agent_map[x][y] != TYPE.UNKNOWN:
@@ -236,16 +256,18 @@ class Agent(GenerateMineSweeperMap):
 
             observed = len(self.known) + len(self.flagged)
 
-        self.output_agent_map()
-        print("Restart: ", restartCoordinates)
-        print("Random Select: ", randomSelect)
-        print("Prediction Coordinates: ", predictionCoordinates)
 
-        incorrect = []
-        for mine in self.flagged:
-            if mine in predictionCoordinates:
-                incorrect.append(mine)
-        print("Prediction Mines: ", incorrect)
+        if self.MODE == MineSweeper.DEBUG:
+            self.output_agent_map()
+            print("Restart: ", restartCoordinates)
+            print("Random Select: ", randomSelect)
+            print("Prediction Coordinates: ", predictionCoordinates)
+
+            incorrect = []
+            for mine in self.flagged:
+                if mine in predictionCoordinates:
+                    incorrect.append(mine)
+            print("Prediction Mines: ", incorrect)
 
     def force_restart(self):
         unobservedCoordinates = []
@@ -306,10 +328,10 @@ class Agent(GenerateMineSweeperMap):
             self.agentCurrentLocation = location
 
         if incorrect:
-            self.agentIncorrectlyIdentified.append(incorrect)
+            self.agentIncorrectlyIdentified.append(copy_tuple(incorrect))
 
         if correct:
-            self.agentCorrectlyIdentified.append(correct)
+            self.agentCorrectlyIdentified.append(copy_tuple(correct))
 
         if typeOfSelection:
             self.agentSelectionType = typeOfSelection
@@ -318,13 +340,17 @@ class Agent(GenerateMineSweeperMap):
             self.agentPredictions = predictions
 
     def resetAgentsCurrentState(self):
+        if not self.agentCurrentLocation:
+            return
+        location = copy_tuple(self.agentCurrentLocation)
+
         oldAgentState = {
 
-            'location': self.agentCurrentLocation,
-            'incorrectlyIdentified': self.agentIncorrectlyIdentified.copy(),
-            'correctlyIdentified': self.agentCorrectlyIdentified.copy(),
-            'selectionType': self.agentSelectionType,
-            'predictions': self.agentPredictions.copy(),
+            'location': location,
+            'incorrectlyIdentified': copy_list(self.agentIncorrectlyIdentified),
+            'correctlyIdentified': copy_list(self.agentCorrectlyIdentified),
+            'selectionType': int(self.agentSelectionType),
+            'predictions': copy_list(self.agentPredictions),
 
         }
         self.agentStateCache.append(oldAgentState)

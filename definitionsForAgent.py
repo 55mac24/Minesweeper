@@ -2,6 +2,8 @@ class MineSweeper:
     # Bounds
     MAX_NEIGHBORS = 8
     MIN_BOUND = 0
+    DEBUG = -1
+    PRODUCTION = -2
 
 class SELECTION:
     # Coordinate Selection Type
@@ -10,6 +12,7 @@ class SELECTION:
     PREDICTION = 202
     RESTART = 203
     START = 204
+
 
 class MINIMIZE:
     # Minimize Types

@@ -1,5 +1,5 @@
 from agent import Agent
-from definitionsForAgent import MINIMIZE
+from definitionsForAgent import MineSweeper, MINIMIZE
 from copy import deepcopy
 import json
 from random import randint
@@ -21,7 +21,7 @@ def computeMineDensityPerformance(results):
 
 
 dimensions = 10
-density = 0.1
+density = 0.25
 
 density_offset = 0.025
 
@@ -41,6 +41,9 @@ improved_res_v2_5 = {}
 improved_res_v2_5_sub_trial = []
 
 copyCacheState = False
+
+mode = MineSweeper.PRODUCTION
+
 # if subTrials == 1:
 #     copyCacheState = True
 # else:
@@ -55,7 +58,7 @@ while trialsConducted < trials:
     (x_o, y_o) = (randint(0, dimensions - 1), randint(0, dimensions - 1))
     starting_coord = (x_o, y_o)
 
-    improved_performance_v2_5 = Agent(dimensions, numberOfMines[mineDensityIndex], starting_coord, -1, minimize)
+    improved_performance_v2_5 = Agent(dimensions, numberOfMines[mineDensityIndex], starting_coord, -1, minimize, mode)
 
     i_perf_v2_5 = (numberOfMines[mineDensityIndex] - improved_performance_v2_5.agent_died) / numberOfMines[mineDensityIndex]
     improved_res_v2_5_sub_trial.append(i_perf_v2_5)
@@ -92,7 +95,7 @@ print(improved_res_v2_5)
 print("Average Performance of v2.5 : %.2f" % improved_avg_v2_5,end='')
 print("%")
 '''
-print("Nume of Mines: ", numberOfMines)
+print("Number of Mines: ", numberOfMines)
 improved_avg_v2_5 = computeMineDensityPerformance(improved_res_v2_5)
 print("Average Performance of v2.5 : ", improved_avg_v2_5)
 

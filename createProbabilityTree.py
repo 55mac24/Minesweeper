@@ -1,7 +1,7 @@
 from collections import Counter
 from random import randint
 from constraintList import ListOfConstraints
-from definitionsForAgent import VALUE, MINIMIZE
+from definitionsForAgent import MineSweeper, VALUE, MINIMIZE
 from tree import Tree
 
 
@@ -29,9 +29,10 @@ def combineTreePredictions(valuesFromClueTree, valuesFromMineTree):
 
 
 class CreateProbability:
-    def __init__(self, minimize, original_constraints):
+    def __init__(self, minimize, original_constraints, mode):
         self.minimize = minimize
         self.original_constraints = original_constraints
+        self.MODE = mode
 
         self.cellsAsClueObservations, self.cellsAsMineObservations, self.total = {}, {}, {}
         self.cellsDeducedIfClue, self.cellsDeducedIfMine = {}, {}
@@ -134,9 +135,10 @@ class CreateProbability:
         tempTotal = combineTreePredictions(self.total, self.cellsAsClueObservations)
         self.total = combineTreePredictions(tempTotal, self.cellsAsMineObservations)
 
-        # print("Clue Observations: ", self.cellsAsClueObservations)
-        # print("Mine Observations: ", self.cellsAsMineObservations)
-        # print("Total: ", self.total)
+        if self.MODE == MineSweeper.DEBUG:
+            print("Clue Observations: ", self.cellsAsClueObservations)
+            print("Mine Observations: ", self.cellsAsMineObservations)
+            print("Total: ", self.total)
 
     def predict(self):
         if self.original_constraints.length() < 1:
@@ -144,44 +146,45 @@ class CreateProbability:
 
         independent_sets = self.independent_sets()
         independentConstraintListSets = create2DConstraintList(independent_sets)
-
-        # print("--------------- Combining Start ---------------")
+        if self.MODE == MineSweeper.DEBUG:
+            print("--------------- Combining Start ---------------")
 
         for constraints in independentConstraintListSets:
 
             coordinates = constraints.coordinates()
             root_coordinate = random_coordinate(coordinates)
-
-            # print("TEST CELL: ", root_coordinate)
+            if self.MODE == MineSweeper.DEBUG:
+                print("TEST CELL: ", root_coordinate)
             if not root_coordinate:
                 continue
 
-            clue_tree = Tree(root_coordinate, constraints.get(), VALUE.CLUE, self.minimize)
+            clue_tree = Tree(root_coordinate, constraints.get(), VALUE.CLUE, self.minimize, self.MODE)
             clue_tree.COMPUTE()
 
-            mine_tree = Tree(root_coordinate, constraints.get(), VALUE.MINE, self.minimize)
+            mine_tree = Tree(root_coordinate, constraints.get(), VALUE.MINE, self.minimize, self.MODE)
             mine_tree.COMPUTE()
 
             self.calculate(clue_tree=clue_tree, mine_tree=mine_tree)
 
         self.createMineProbability()
 
-        # if len(self.predictions) > 0:
-        #     print("Predictions: ", self.predictions)
+        if self.MODE == MineSweeper.DEBUG and len(self.predictions) > 0:
+            print("Predictions: ", self.predictions)
 
-        #print("---------------- Combining End ----------------")
+        if self.MODE == MineSweeper.DEBUG:
+            print("---------------- Combining End ----------------")
 
     def get(self):
         coordinate, probability = self.minimizeRisk() if self.minimize == MINIMIZE.RISK else self.minimizeCost()
+        if self.MODE == MineSweeper.DEBUG:
+            if coordinate:
+                if self.minimize == MINIMIZE.RISK:
+                    print("Pick: ", coordinate, " Risk: ", probability)
 
-        # if coordinate:
-        #     if self.minimize == MINIMIZE.RISK:
-        #         print("Pick: ", coordinate, " Risk: ", probability)
-        #
-        #     else:
-        #         print("Pick: ", coordinate, " Cost: ", probability)
-        # else:
-        #     print("Pick: Force Restart")
+                else:
+                    print("Pick: ", coordinate, " Cost: ", probability)
+            else:
+                print("Pick: Force Restart")
 
         return coordinate
 
@@ -225,12 +228,14 @@ class CreateProbability:
                     constraint_list.remove(constraint_list[index])
                 else:
                     index += 1
-        # count = 0
-        # print(union_set_index)
-        # for union in disjointConstraints:
-        #     print("Set #%d: " % (count), end='')
-        #     for equation in union:
-        #         print(equation.constraint, " ", equation.value, " | ", end='')
-        #     print()
-        #     count += 1
+
+        if self.MODE == MineSweeper.DEBUG:
+            count = 0
+            print(union_set_index)
+            for union in disjointConstraints:
+                print("Set #%d: " % (count), end='')
+                for equation in union:
+                    print(equation.constraint, " ", equation.value, " | ", end='')
+                print()
+                count += 1
         return disjointConstraints
