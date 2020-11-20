@@ -99,7 +99,7 @@ class Agent(GenerateMineSweeperMap):
                 self.updateAgentKnowledge(unknowns, isMineUpdate=True, typeOfSelection=SELECTION.CONSTRAINT_REDUCTION)
 
             # If Max Neighbors - Coordinate's Value - # Adj. Known Cells = # Adj. Unknowns, then all Unknowns are Clues
-            elif (MineSweeper.MAX_NEIGHBORS - self.agent_map[x][y]) - numOfAdjKnowns == numOfAdjUnknowns:
+            elif (len(neighbors) - self.agent_map[x][y]) - numOfAdjKnowns == numOfAdjUnknowns:
                 cells_to_uncover.extend(unknowns)
 
         return cells_to_uncover, neighbors
