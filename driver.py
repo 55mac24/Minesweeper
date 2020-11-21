@@ -4,6 +4,7 @@ import argparse
 from random import randint
 import sys
 
+
 def computePerformanceOfAgent(results):
     totalSum = 0
     for result in results:
@@ -121,7 +122,8 @@ if __name__ == "__main__":
         parser.add_argument('-d', '--dimensions', type=int, metavar='dimensions', help=dimension_help_msg)
         parser.add_argument('-p', '--density', type=float, metavar='density', nargs='?', help=density_help_msg,
                             default='0.1')
-        parser.add_argument('-o', '--offset', type=float, metavar='density_offset', nargs='?', help=density_offset_help_msg,
+        parser.add_argument('-o', '--offset', type=float, metavar='density_offset', nargs='?',
+                            help=density_offset_help_msg,
                             default='0.025')
         parser.add_argument('-t', '--trials', type=int, metavar='trials', help=trials_help_msg)
         parser.add_argument('-s', '--subtrials', type=int, metavar='subtrials', nargs='?', help=subtrials_help_msg,
@@ -153,9 +155,11 @@ if __name__ == "__main__":
             minimize = MINIMIZE.NONE
 
         conductTrials = False
-        print("Dimensions: %d | Density: %.2f | Density Offset: %.4f | " % (dimensions, density, density_offset), end='')
+        print("Dimensions: %d | Density: %.2f | Density Offset: %.4f | " % (dimensions, density, density_offset),
+              end='')
         print("Trials: %d | Sub-Trials: %d | Minimize: %s" % (trials, subTrials, minimize))
 
         driver = MinesweeperSolver(dimensions=dimensions, density=density, density_offset=density_offset,
-                        trials=trials, subTrials=subTrials, minimize=minimize, copyCacheState=True)
+                                   trials=trials, subTrials=subTrials, minimize=minimize, copyCacheState=True)
+
         driver.execute()
