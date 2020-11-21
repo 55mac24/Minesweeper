@@ -2,12 +2,13 @@
 This library aims to solve the game Minesweeper as a Constraint Satisfaction Problem (CSP) by developing constraints for each cell observed adjacent to a Minesweeper clue. Furthermore, the library allows for predictive solving by creating a binary tree of potential configurations that satisfy the set of constraints.
 
 # Using the Minesweeper Library
+* Example package setup with file: test.py
 ```python
-	from MineSweeperSolver import MinesweeperSolver
-	from MineSweeperSolver import MINIMIZE, MineSweeper
+from MineSweeperSolver import MinesweeperSolver
+from MineSweeperSolver import MINIMIZE, MineSweeper
 
-	driver = MinesweeperSolver(dimensions=16, density=0.4, minimize=MINIMIZE.COST, mode=MineSweeper.PRODUCTION_MAPS)
-	driver.run()
+driver = MinesweeperSolver(dimensions=16, density=0.4, minimize=MINIMIZE.COST, mode=MineSweeper.PRODUCTION_MAPS)
+driver.run()
 	
 ```
 - The following variables are responsible for changing the Minesweeper map configuration along with how the agent attempts to solve the map:
