@@ -22,7 +22,7 @@ class Leaf:
         else:
             self.listOfConstraints.set(listOfConstraintsToSet.constraints)
 
-        self.listOfConstraints.add([self.coordinate], self.type)
+        self.listOfConstraints.update(self.coordinate, self.type)
 
         while True:
             self.listOfConstraints.reduce()
@@ -101,7 +101,9 @@ class Tree:
                 if not node.mine.isValid:
                     node.mine = None
 
-            if not node.clue and not node.mine:
+            if (not node.clue or (node.clue and not node.clue.isValid)) and \
+                    (not node.mine or (node.mine and not node.mine.isValid)):
+
                 node.isValid = node.listOfConstraints.check()
 
             if not node.isValid:

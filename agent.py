@@ -47,6 +47,7 @@ class Agent(GenerateMineSweeperMap):
 
         self.agentCurrentLocation = None
         self.agentStateCache, self.agentCorrectlyIdentified, self.agentIncorrectlyIdentified = [], [], []
+
         self.agentSelectionType, self.agentPredictions = None, []
 
         self.isVisited = {}
@@ -322,7 +323,8 @@ class Agent(GenerateMineSweeperMap):
     #                                                          #
     ############################################################
 
-    def setAgentsCurrentState(self, location=None, incorrect=None, correct=None, typeOfSelection=None, predictions=None):
+    def setAgentsCurrentState(self, location=None, incorrect=None, correct=None,
+                              typeOfSelection=None, predictions=None):
 
         if location:
             self.agentCurrentLocation = location
@@ -339,6 +341,7 @@ class Agent(GenerateMineSweeperMap):
         if predictions:
             self.agentPredictions = predictions
 
+
     def resetAgentsCurrentState(self):
         if not self.agentCurrentLocation:
             return
@@ -351,6 +354,8 @@ class Agent(GenerateMineSweeperMap):
             'correctlyIdentified': copy_list(self.agentCorrectlyIdentified),
             'selectionType': int(self.agentSelectionType),
             'predictions': copy_list(self.agentPredictions),
+            'known': copy_list(self.known),
+            'flagged': copy_list(self.flagged)
 
         }
         self.agentStateCache.append(oldAgentState)
