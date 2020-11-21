@@ -7,7 +7,7 @@ This library aims to solve the game Minesweeper as a Constraint Satisfaction Pro
 from pyMineSweeperSolver import MinesweeperSolver
 from pyMineSweeperSolver import MINIMIZE, MineSweeper
 
-driver = MinesweeperSolver(dimensions=16, density=0.4, minimize=MINIMIZE.COST, mode=MineSweeper.PRODUCTION_MAPS)
+driver = MinesweeperSolver(dimensions=16, density=0.4, minimize=MINIMIZE.COST, mode=MineSweeper.PRODUCTION)
 driver.run()
 	
 ```
