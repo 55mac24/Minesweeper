@@ -1,2 +1,2 @@
-from .driver import MinesweeperSolver
-from .definitionsForAgent import MINIMIZE
+from .src.definitionsForAgent import MINIMIZE, MineSweeper
+from .src.driver import MinesweeperSolver
