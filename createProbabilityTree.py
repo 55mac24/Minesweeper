@@ -1,8 +1,8 @@
 from collections import Counter
 from random import randint
-from constraintList import ListOfConstraints
-from definitionsForAgent import MineSweeper, VALUE, MINIMIZE
-from tree import Tree
+from .constraintList import ListOfConstraints
+from .definitionsForAgent import MineSweeper, VALUE, MINIMIZE
+from .tree import Tree
 
 
 # Get Random Coordinate From List of Coordinates

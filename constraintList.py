@@ -1,4 +1,4 @@
-from constraint import Constraint
+from .constraint import Constraint
 
 
 class ListOfConstraints:

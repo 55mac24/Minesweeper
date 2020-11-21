@@ -1,4 +1,4 @@
-from definitionsForAgent import MineSweeper, VALUE, TYPE
+from .definitionsForAgent import MineSweeper, VALUE, TYPE
 from random import randint
 
 

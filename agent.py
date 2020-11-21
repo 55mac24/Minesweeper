@@ -1,8 +1,8 @@
-from generateMineSweeperMap import GenerateMineSweeperMap
-from constraintList import ListOfConstraints
-from definitionsForAgent import MineSweeper, VALUE, TYPE, MINIMIZE, SELECTION
+from .generateMineSweeperMap import GenerateMineSweeperMap
+from .constraintList import ListOfConstraints
+from .definitionsForAgent import MineSweeper, VALUE, TYPE, MINIMIZE, SELECTION
 from random import randint
-from createProbabilityTree import CreateProbability
+from .createProbabilityTree import CreateProbability
 
 
 # Randomly Select From List
@@ -31,12 +31,14 @@ def copy_list(list_to_copy):
             list_copy.append(copy_tuple(coordinate_i))
     return list_copy
 
+
 class Agent(GenerateMineSweeperMap):
-    def __init__(self, dimensions, mines, startingCoordinate, isMapPassed, minimizeCostOrRisk, MODE):
+    def __init__(self, dimensions, mines, startingCoordinate, isMapPassed, minimizeCostOrRisk, MODE, copyCacheState):
         super().__init__(dimensions, mines, startingCoordinate, isMapPassed)
 
         self.create_map()  # Initialize Map To Solve
 
+        self.copyCacheState = copyCacheState
         self.minimize = minimizeCostOrRisk
         self.MODE = MODE
 
@@ -66,16 +68,19 @@ class Agent(GenerateMineSweeperMap):
 
     def updateLocalMap(self, coordinate, typeOfSelection=SELECTION.RESTART):
         (x, y) = coordinate
-        self.setAgentsCurrentState(typeOfSelection=typeOfSelection)
+        if self.copyCacheState:
+            self.setAgentsCurrentState(typeOfSelection=typeOfSelection)
         if self.agent_map[x][y] == TYPE.FLAG:
-            self.setAgentsCurrentState(correct=coordinate)
+            if self.copyCacheState:
+                self.setAgentsCurrentState(correct=coordinate)
             return TYPE.FLAG
         else:
             value, didAgentDie = self.get_value(coordinate)
-            if didAgentDie:
-                self.setAgentsCurrentState(incorrect=coordinate)
-            else:
-                self.setAgentsCurrentState(correct=coordinate)
+            if self.copyCacheState:
+                if didAgentDie:
+                    self.setAgentsCurrentState(incorrect=coordinate)
+                else:
+                    self.setAgentsCurrentState(correct=coordinate)
             return value
 
     # Perform Basic Minesweeper Logic to Reduce Constraint Equations List
@@ -170,7 +175,8 @@ class Agent(GenerateMineSweeperMap):
             configurations.predict()
             nextCoordinateToVisit = configurations.get()
             if nextCoordinateToVisit:
-                self.setAgentsCurrentState(predictions=configurations.getPredictions())
+                if self.copyCacheState:
+                    self.setAgentsCurrentState(predictions=configurations.getPredictions())
                 self.updateAgentKnowledge([nextCoordinateToVisit], typeOfSelection=SELECTION.PREDICTION)
                 return nextCoordinateToVisit, SELECTION.PREDICTION
 
@@ -192,8 +198,10 @@ class Agent(GenerateMineSweeperMap):
                 print(len(self.known), " + ", len(self.flagged) , " = ", numberOfCoordinates)
 
             coordinate = stack.pop()
-            self.resetAgentsCurrentState()
-            self.setAgentsCurrentState(location=coordinate)
+            if self.copyCacheState:
+                self.resetAgentsCurrentState()
+                self.setAgentsCurrentState(location=coordinate)
+
             if self.MODE == MineSweeper.DEBUG:
                 self.output_agent_map()
                 print("Mines: ", self.flagged)
@@ -370,12 +378,7 @@ class Agent(GenerateMineSweeperMap):
     ############################################################
     def output_agent_map(self):
         print(" ------------- AGENTS MAP ------------- ")
-        print("|---|", end='')
         for x in range(self.dimensions):
-            print("  %d|" % x, end='')
-        print()
-        for x in range(self.dimensions):
-            print("| %d " % x, end='')
             for y in range(self.dimensions):
                 print("| ", self.agent_map[x][y], end='')
             print("|", end='')

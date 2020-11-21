@@ -1,5 +1,5 @@
-from definitionsForAgent import MineSweeper, VALUE, MINIMIZE
-from constraintList import ListOfConstraints
+from .definitionsForAgent import MineSweeper, VALUE, MINIMIZE
+from .constraintList import ListOfConstraints
 
 
 class Leaf:

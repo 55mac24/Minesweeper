@@ -5,6 +5,7 @@ class MineSweeper:
     DEBUG = -1
     PRODUCTION = -2
 
+
 class SELECTION:
     # Coordinate Selection Type
     CONSTRAINT_REDUCTION = 200
