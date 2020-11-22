@@ -6,7 +6,7 @@ This library aims to solve the game Minesweeper as a Constraint Satisfaction Pro
 	- First clone the repository into some arbitrary root directory. For this example, a directory labeled 'test' will be the root directory for installing the package, and the cloned repository path will be './test/Minesweeper'. 
 	- Within the root directory (in this example, 'test') for the repository, execute ```pip install ./Minesweeper```.
 		- **Note:** Be sure the ```pip``` version corresponds to Python 3. If not, execute ```pip3 install ./Minesweeper```. Furthermore, it is recommended to use a virtual environment for the package installation. 
-	- The package should now be accessible within the virtual environment if the package was configured a virtual environment. 
+	- The package should now be accessible within the virtual environment if the package was configured with a virtual environment. 
 	
 * Example package usuage with filename: test.py
 ```python
