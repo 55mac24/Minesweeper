@@ -28,9 +28,13 @@ class MinesweeperSolver:
                  mode=MineSweeper.PRODUCTION):
 
         self.dimensions = dimensions if 3 <= dimensions < 256 else 10
-        self.density, self.density_offset = density, density_offset
+        self.density = density if 0.01 <= density < 1 else 0.01
+
+        self.density_offset = density_offset if 0.0000001 <= density_offset < 0.5 else 0.025
+        self.trials = trials if 1 <= trials < 10000 else 1
+        self.subTrials = subTrials if 1 <= subTrials < 10000 else 1
+
         self.minimize = minimize
-        self.trials, self.subTrials = trials, subTrials
         self.copyCacheState, self.mode = copyCacheState, mode
 
         self.improved_res_v2_5, self.improved_res_v2_5_sub_trial = None, None

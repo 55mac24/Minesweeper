@@ -2,6 +2,7 @@ class MineSweeper:
     # Bounds
     MAX_NEIGHBORS = 8
     MIN_BOUND = 0
+    # Execution modes that change output
     DEBUG = -1
     PRODUCTION = -2
     PRODUCTION_MAPS = -3

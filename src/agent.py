@@ -164,6 +164,8 @@ class Agent(GenerateMineSweeperMap):
             clues, mines = self.listOfConstraints.deduce()
             self.updateAgentKnowledge(clues)
             self.updateAgentKnowledge(mines, isMineUpdate=True)
+            if self.MODE == MineSweeper.PRODUCTION_MAPS or self.MODE == MineSweeper.DEBUG:
+                self.output_agent_map()
             if len(clues) > 0 or len(mines) > 0:
                 self.simplifyConstraintEquations()
             else:
@@ -266,7 +268,6 @@ class Agent(GenerateMineSweeperMap):
                     restartCoordinates.append(nextCoordinateToVisit)
 
             observed = len(self.known) + len(self.flagged)
-
 
         if self.MODE == MineSweeper.DEBUG:
             self.output_agent_map()
