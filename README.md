@@ -1,5 +1,5 @@
 # Solving Minesweeper 
-This library aims to solve the game Minesweeper as a Constraint Satisfaction Problem (CSP) by developing constraints for each cell observed adjacent to a Minesweeper clue. Furthermore, the library allows for predictive solving by incoporating a binary tree that develops potential configurations that satisfy a set of constraints to determine which coordinate to select based on how likely the coordinate is a mine.
+This library aims to solve the game Minesweeper as a Constraint Satisfaction Problem (CSP) by developing constraints for each cell observed adjacent to a Minesweeper clue. Furthermore, the library allows for predictive solving by incoporating a binary tree that develops potential configurations that satisfy a set of constraints to determine which coordinate to select next in the Minesweeper map traversal based on how likely the coordinate is a mine.
 
 # Using the Minesweeper Library
 * Installing Package:
@@ -26,6 +26,6 @@ driver.run()
 | density_offset | float | how much to increase the mine density after completion of a trial |
 | trials | int | how many trials the agent should conduct |
 | subtrials | int | how many sub-trials the agent should conduct at a particular mine density|
-| minimize | int | Minesweeper.NONE solves using python random selections, and Minesweeper.COST solves by minimizing cost while Minesweeper.RISK solves by minimizing  RISK |
+| minimize | int | When the agent still has cells to discover, but the stack is empty during the traversal these are policies determine how the agent selects the next coordinat to add to the stack: <ul><li>Minesweeper.NONE solves using python random selections</li> <li>Minesweeper.COST solves by selecting a cell with the lowest likelihood of being a mine.</li> <li>Minesweeper.RISK solves by using the following formula: <ul><li>Assume *q* is the likelihood a coordinate is a mine, *R* is the number of squares that can be deduced if it is a mine, and *S* is the number of squares that can be deduced if it is a clue.</li> <li>Then, **qR + (1 - q)S** is the risk assessment for the coordinate.</li></ul> <li> The coordinate with lowest risk is selected </li></ul>|
 | copyCacheState | boolean | Saves Agent moves at each step. **Note:** this only shows the agent's move for the last trial conducted|
 | mode | int | <ul><li>MineSweeper.PRODUCTION for solely seeing the agent's accuracy for solving a map</li> <li>MineSweeper.PRODUCTION_MAPS to see how the agent's map updates as it solves</li> <li>MineSweeper.DEBUG to receive a detailed console log of program execution</li></ul>|
