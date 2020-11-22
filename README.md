@@ -4,8 +4,8 @@ This library aims to solve the game Minesweeper as a Constraint Satisfaction Pro
 # Using the Minesweeper Library
 * Example package setup with file: test.py
 ```python
-from pyMineSweeperSolver import MinesweeperSolver
-from pyMineSweeperSolver import MINIMIZE, MineSweeper
+from MineSweeper import MinesweeperSolver
+from MineSweeper import MINIMIZE, MineSweeper
 
 driver = MinesweeperSolver(dimensions=16, density=0.4, minimize=MINIMIZE.COST, mode=MineSweeper.PRODUCTION)
 driver.run()
