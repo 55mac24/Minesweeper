@@ -22,7 +22,7 @@ driver.run()
 | Variable Name | Type Of Value | Description
 |-------------|----------|------------------------------------------------------------------------------------------|
 | dimensions | int |  <ul><li>the dimensions for the map </li> <li>**Note:** You must input a value for this within the range 3 <= dimensions <= 256</li></ul> |
-| density | float | <ul><li>the mine density for the map<li> <li>**Note:** This input is not required an will default to 0.1, however, if input is provided, it must be within the range 0.01 <= density < 1 otherwise it will default to 0.1<li></ul> |
+| density | float | <ul><li>the mine density for the map</li> <li>**Note:** This input is not required an will default to 0.1, however, if input is provided, it must be within the range 0.01 <= density < 1 otherwise it will default to 0.1</li></ul> |
 | density_offset | float | how much to increase the mine density after completion of a trial |
 | trials | int | how many trials the agent should conduct |
 | subtrials | int | how many sub-trials the agent should conduct at a particular mine density|
