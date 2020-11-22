@@ -1,5 +1,5 @@
 # Solving Minesweeper 
-This library aims to solve the game Minesweeper as a Constraint Satisfaction Problem (CSP) by developing constraints for each cell observed adjacent to a Minesweeper clue. Furthermore, the library allows for predictive solving by creating a binary tree of potential configurations that satisfy the set of constraints.
+This library aims to solve the game Minesweeper as a Constraint Satisfaction Problem (CSP) by developing constraints for each cell observed adjacent to a Minesweeper clue. Furthermore, the library allows for predictive solving by incoporating a binary tree that develops potential configurations that satisfy a set of constraints to determine which coordinate to select based on how likely the coordinate is a mine.
 
 # Using the Minesweeper Library
 * Installing Package:
@@ -28,4 +28,4 @@ driver.run()
 | subtrials | int | how many sub-trials the agent should conduct at a particular mine density|
 | minimize | int | Minesweeper.NONE solves using python random selections, and Minesweeper.COST solves by minimizing cost while Minesweeper.RISK solves by minimizing  RISK |
 | copyCacheState | boolean | Saves Agent moves at each step. **Note:** this only shows the agent's move for the last trial conducted|
-| mode | int | Use MineSweeper.PRODUCTION for solely seeing the agent's accuracy for solving a map or MineSweeper.PRODUCTION_MAPS to see how the agent's map updates as it solves, or MineSweeper.DEBUG to receive a detailed console log of program execution|
+| mode | int | <ul><li>MineSweeper.PRODUCTION for solely seeing the agent's accuracy for solving a map</li> <li>MineSweeper.PRODUCTION_MAPS to see how the agent's map updates as it solves</li> <li>MineSweeper.DEBUG to receive a detailed console log of program execution</li></ul>|
