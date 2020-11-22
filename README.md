@@ -5,7 +5,7 @@ This library aims to solve the game Minesweeper as a Constraint Satisfaction Pro
 * Installing Package:
 	- First clone the repository into some arbitrary root directory. For this example, a directory labeled 'test' will be the root directory for installing the package, and the cloned repository path will be './test/Minesweeper'. 
 	
-* Example package usuage with filename: test.py
+* Example package usage in filename: ./test/test.py
 ```python
 from Minesweeper import MinesweeperSolver
 from Minesweeper import MINIMIZE, MineSweeper
