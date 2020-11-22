@@ -62,11 +62,11 @@ class CreateProbability:
         for prediction in self.predictions:
             coordinate, q = prediction
             if coordinate in self.cellsDeducedIfClue and coordinate in self.cellsDeducedIfMine:
-                risk = (q * self.cellsDeducedIfClue[coordinate]) + ((1 - q) * self.cellsDeducedIfMine[coordinate])
-            elif coordinate in self.cellsDeducedIfClue:
-                risk = (q * self.cellsDeducedIfClue[coordinate])
+                risk = (q * self.cellsDeducedIfMine[coordinate]) + ((1 - q) * self.cellsDeducedIfClue[coordinate])
             elif coordinate in self.cellsDeducedIfMine:
-                risk = ((1 - q) * self.cellsDeducedIfMine[coordinate])
+                risk = (q * self.cellsDeducedIfMine[coordinate])
+            elif coordinate in self.cellsDeducedIfClue:
+                risk = ((1 - q) * self.cellsDeducedIfClue[coordinate])
             else:
                 continue
 
