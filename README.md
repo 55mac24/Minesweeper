@@ -2,10 +2,16 @@
 This library aims to solve the game Minesweeper as a Constraint Satisfaction Problem (CSP) by developing constraints for each cell observed adjacent to a Minesweeper clue. Furthermore, the library allows for predictive solving by creating a binary tree of potential configurations that satisfy the set of constraints.
 
 # Using the Minesweeper Library
-* Example package setup with file: test.py
+* Installing Package:
+	- First clone the repository into some arbitrary root directory. For this example, a directory labeled 'test' will be the root directory for installing the package, and the cloned repository path will be './test/Minesweeper'. 
+	- Within the root directory (in this example, 'test') for the repository, execute ```pip install ./Minesweeper```.
+		- **Note:** Be sure the ```pip``` version corresponds to Python 3. If not, execute ```pip3 install ./Minesweeper```. Furthermore, it is recommended to use a virtual environment for the package installation. 
+	- The package should now be accessible within the virtual environment if the package was configured a virtual environment. 
+	
+* Example package usuage with filename: test.py
 ```python
-from MineSweeper import MinesweeperSolver
-from MineSweeper import MINIMIZE, MineSweeper
+from Minesweeper import MinesweeperSolver
+from Minesweeper import MINIMIZE, MineSweeper
 
 driver = MinesweeperSolver(dimensions=16, density=0.4, minimize=MINIMIZE.COST, mode=MineSweeper.PRODUCTION)
 driver.run()
@@ -15,8 +21,10 @@ driver.run()
 
 | Variable Name | Type Of Value | Description
 |-------------|----------|------------------------------------------------------------------------------------------|
-| dimensions | int | the dimensions for the map **Note:** You must input a value for this within the range 3 <= dimensions <= 256 |
-| density | float | the mine density for the map **Note:** This input must be within the range 0.01 <= density < 1 |
+| dimensions | int | the dimensions for the map 
+	**Note:** You must input a value for this within the range 3 <= dimensions <= 256 |
+| density | float | the mine density for the map 
+			**Note:** This input must be within the range 0.01 <= density < 1 |
 | density_offset | float | how much to increase the mine density after completion of a trial |
 | trials | int | how many trials the agent should conduct |
 | subtrials | int | how many sub-trials the agent should conduct at a particular mine density|
