@@ -52,8 +52,8 @@ class MinesweeperSolver:
         self.numberOfMines = [self.mines]
 
     def performance(self):
-        print("Number of Mines: ", self.numberOfMines)
         first_density_perf, improved_avg_v2_5 = computeMineDensityPerformance(self.improved_res_v2_5)
+        print("Number of Mines: ", self.numberOfMines)
         print("Average Performance of v2.5 : ", improved_avg_v2_5)
         return first_density_perf, improved_avg_v2_5
 
@@ -127,7 +127,8 @@ if __name__ == "__main__":
         parser.add_argument('-d', '--dimensions', type=int, metavar='dimensions', help=dimension_help_msg)
         parser.add_argument('-p', '--density', type=float, metavar='density', nargs='?', help=density_help_msg,
                             default='0.1')
-        parser.add_argument('-o', '--offset', type=float, metavar='density_offset', nargs='?', help=density_offset_help_msg,
+        parser.add_argument('-o', '--offset', type=float, metavar='density_offset', nargs='?',
+                            help=density_offset_help_msg,
                             default='0.025')
         parser.add_argument('-t', '--trials', type=int, metavar='trials', help=trials_help_msg)
         parser.add_argument('-s', '--subtrials', type=int, metavar='subtrials', nargs='?', help=subtrials_help_msg,
@@ -137,12 +138,12 @@ if __name__ == "__main__":
 
         args = parser.parse_args(sys.argv[1:])
 
-        dimensions = args.dimensions if 3 < args.dimensions < 256 else 10
-        density = args.density if args.density and 0.0 < args.density < 1.0 else 0.1
-        density_offset = args.offset if args.offset and 0.0 < args.offset <= 0.5 else 0.025
-        trials = args.trials if args.trials and 0 < args.trials <= 100 else 1
+        dimensions_ = args.dimensions if 3 < args.dimensions < 256 else 10
+        density_ = args.density if args.density and 0.0 < args.density < 1.0 else 0.1
+        density_offset_ = args.offset if args.offset and 0.0 < args.offset <= 0.5 else 0.025
+        trials_ = args.trials if args.trials and 0 < args.trials <= 100 else 1
 
-        subTrials = args.subtrials if args.subtrials and 0 < args.subtrials <= 100 else 1
+        subTrials_ = args.subtrials if args.subtrials and 0 < args.subtrials <= 100 else 1
 
         arg_minimize = None
 
@@ -152,15 +153,16 @@ if __name__ == "__main__":
             arg_minimize = MINIMIZE.NONE
 
         if arg_minimize == MINIMIZE.COST:
-            minimize = MINIMIZE.COST
+            minimize_ = MINIMIZE.COST
         elif arg_minimize == MINIMIZE.RISK:
-            minimize = MINIMIZE.RISK
+            minimize_ = MINIMIZE.RISK
         else:
-            minimize = MINIMIZE.NONE
+            minimize_ = MINIMIZE.NONE
 
-        print("Dimensions: %d | Density: %.2f | Density Offset: %.4f | " % (dimensions, density, density_offset), end='')
-        print("Trials: %d | Sub-Trials: %d | Minimize: %s" % (trials, subTrials, minimize))
+        print("Dimensions: %d | Density: %.2f | Density Offset: %.4f | " % (dimensions_, density_, density_offset_),
+              end='')
+        print("Trials: %d | Sub-Trials: %d | Minimize: %s" % (trials_, subTrials_, minimize_))
 
-        driver = MinesweeperSolver(dimensions=dimensions, density=density, density_offset=density_offset,
-                        trials=trials, subTrials=subTrials, minimize=minimize, copyCacheState=True)
+        driver = MinesweeperSolver(dimensions=dimensions_, density=density_, density_offset=density_offset_,
+                                   trials=trials_, subTrials=subTrials_, minimize=minimize_, copyCacheState=False)
         driver.run()
