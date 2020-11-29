@@ -2,7 +2,7 @@
 This library aims to solve the game Minesweeper as a Constraint Satisfaction Problem (CSP) by developing constraints for each cell observed adjacent to a Minesweeper clue. Furthermore, the library allows for predictive solving by incoporating a binary tree that develops potential configurations that satisfy a set of constraints to determine which coordinate to select next in the Minesweeper map traversal based on how likely the coordinate is a mine.
 
 # Veiw The Demo
-- http://minesweeper.macauleypinto.com/
+- https://minesweeper.macauleypinto.com/
 
 # Using the Minesweeper Library
 * Installing Package:
