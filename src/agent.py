@@ -83,7 +83,7 @@ class Agent(GenerateMineSweeperMap):
                     self.setAgentsCurrentState(correct=coordinate)
             return value
 
-    # Perform Basic src Logic to Reduce Constraint Equations List
+    # Perform Basic Minesweeper Logic to Reduce Constraint Equations List
     def basicMineSweeperLogicReductions(self, coordinate):
 
         (x, y) = coordinate
